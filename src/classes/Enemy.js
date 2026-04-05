@@ -79,6 +79,8 @@ export default class Enemy {
   }
 
   _showSpeechBubble() {
+    // Ukrainian bureaucrat excuses:
+    //   'Come back tomorrow!', 'We are on lunch break!', 'Where is the certificate?'
     const phrases = ['Приходьте завтра!', 'У нас обід!', 'Де довідка?'];
     const phrase = phrases[Math.floor(Math.random() * phrases.length)];
 

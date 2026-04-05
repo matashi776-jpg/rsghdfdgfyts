@@ -180,7 +180,7 @@ export default class UIScene extends Phaser.Scene {
 
     // Visual feedback
     const { width } = this.scale;
-    this._floatingText(width / 2, 55, `-${GOOSE_COST} ₴  🪿 Goose placed!`, '#80cbc4');
+    this._floatingText(width / 2, 55, `-${GOOSE_COST} ₴  [Goose] placed!`, '#80cbc4');
   }
 
   // ─── Lane Drop Highlights ────────────────────────────────────────────────────
