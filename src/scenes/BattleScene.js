@@ -234,7 +234,7 @@ export default class BattleScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    const tick = this.time.addEvent({
+    this._countdownTimer = this.time.addEvent({
       delay: 1000,
       repeat: 4,
       callback: () => {
@@ -244,6 +244,7 @@ export default class BattleScene extends Phaser.Scene {
         } else {
           this.tweens.killTweensOf(countText);
           countText.destroy();
+          this._countdownTimer = null;
           this._startWave();
         }
       },
@@ -308,7 +309,7 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Background Music ─────────────────────────────────────────────────────────
 
   _setupBGMusic() {
-    if (this.sound.get('bg_music')) {
+    if (this.cache.audio.exists('bg_music')) {
       this.sound.play('bg_music', { loop: true, volume: 0.2 });
     }
   }
