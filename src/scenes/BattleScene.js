@@ -38,8 +38,6 @@ export default class BattleScene extends Phaser.Scene {
         this.addLogMessage('A wild DRAGON appears!');
         this.addLogMessage('Choose your action...');
 
-        // Listen for restart events from UIScene
-        this.events.on('restartBattle', this.restartBattle, this);
     }
 
     drawBackground() {
@@ -429,8 +427,4 @@ export default class BattleScene extends Phaser.Scene {
         });
     }
 
-    restartBattle() {
-        this.scene.stop('UIScene');
-        this.scene.restart();
-    }
 }

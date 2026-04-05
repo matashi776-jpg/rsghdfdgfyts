@@ -9,12 +9,6 @@ const config = {
     height: 600,
     parent: 'game-container',
     pixelArt: true,
-    physics: {
-        default: 'arcade',
-        arcade: {
-            debug: false
-        }
-    },
     scene: [PreloadScene, BattleScene, UIScene]
 };
 
