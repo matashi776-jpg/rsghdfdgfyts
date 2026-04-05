@@ -171,7 +171,7 @@ export default class UIScene extends Phaser.Scene {
 
       const lane = this._getLaneFromY(pointer.y);
       if (lane !== -1) {
-        this._purchaseGoose(lane);
+        this._purchaseGoose(lane, pointer.x);
       }
     });
   }
@@ -183,10 +183,10 @@ export default class UIScene extends Phaser.Scene {
     return -1;
   }
 
-  _purchaseGoose(laneIndex) {
+  _purchaseGoose(laneIndex, dropX) {
     this._battle.gold -= GOOSE_COST;
     this._goldText.setText(`₴ ${this._battle.gold}`);
-    this._battle.placeTower(laneIndex);
+    this._battle.placeTower(laneIndex, dropX);
 
     // Visual feedback
     const { width } = this.scale;
