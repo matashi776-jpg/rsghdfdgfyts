@@ -85,7 +85,7 @@ export default class BattleScene extends Phaser.Scene {
 
   _placeHero() {
     this._hero = this.physics.add.sprite(HERO_X, HERO_Y, 'hero');
-    this._hero.setScale(0.2);
+    this._hero.setScale(0.15);
     this._hero.body.allowGravity = false;
     this._hero.setImmovable(true);
     this._hero.setDepth(8);
