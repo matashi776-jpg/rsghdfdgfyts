@@ -1,0 +1,16 @@
+{
+  "name": "rsghdfdgfyts",
+  "version": "1.0.0",
+  "description": "Ланчин vs Савок — Phaser 3 game",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.60.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
