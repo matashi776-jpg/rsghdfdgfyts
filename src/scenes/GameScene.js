@@ -4,9 +4,9 @@ export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
         this.wave = 1;
+        this.waveTimer = null;
         this.waveTimerText = null;
         this.waveText = null;
-        this.timeUntilNextWave = 30;
     }
 
     create() {
@@ -31,17 +31,9 @@ export default class GameScene extends Phaser.Scene {
 
         // --- СИСТЕМА ВОЛН ---
         // Каждые 30 секунд увеличиваем волну
-        this.time.addEvent({
+        this.waveTimer = this.time.addEvent({
             delay: 30000,
             callback: this.nextWave,
-            callbackScope: this,
-            loop: true
-        });
-
-        // Обновляем счётчик обратного отсчёта каждую секунду
-        this.time.addEvent({
-            delay: 1000,
-            callback: this.updateWaveCountdown,
             callbackScope: this,
             loop: true
         });
@@ -49,16 +41,14 @@ export default class GameScene extends Phaser.Scene {
 
     nextWave() {
         this.wave += 1;
-        this.timeUntilNextWave = 30;
         this.waveText.setText(`Волна: ${this.wave}`);
         this.showWaveAnnouncement();
     }
 
-    updateWaveCountdown() {
-        if (this.timeUntilNextWave > 0) {
-            this.timeUntilNextWave -= 1;
-        }
-        this.waveTimerText.setText(`Следующая волна через: ${this.timeUntilNextWave}с`);
+    update() {
+        // Обновляем счётчик обратного отсчёта на основе оставшегося времени волнового таймера
+        const remaining = Math.ceil(this.waveTimer.getRemainingSeconds());
+        this.waveTimerText.setText(`Следующая волна через: ${remaining}с`);
     }
 
     showWaveAnnouncement() {
