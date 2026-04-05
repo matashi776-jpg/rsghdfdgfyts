@@ -1,0 +1,16 @@
+{
+  "name": "lanchyn-vs-savok",
+  "version": "1.0.0",
+  "description": "Lanchyn vs Savok – 2D Tactical Tower Defense",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.70.0"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}
