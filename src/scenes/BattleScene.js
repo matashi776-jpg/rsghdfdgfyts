@@ -34,7 +34,9 @@ export default class BattleScene extends Phaser.Scene {
     this._buildProjectilePool();
     this._buildParticleSystem();
     this._setupPhysics();
-    this._startWave();
+    this._setupPause();
+    this._setupBGMusic();
+    this._startCountdown();
   }
 
   // ─── Environment ─────────────────────────────────────────────────────────────
@@ -202,6 +204,115 @@ export default class BattleScene extends Phaser.Scene {
     // to avoid destroy-in-callback issues.
   }
 
+  // ─── Preparation Countdown ───────────────────────────────────────────────────
+
+  _startCountdown() {
+    const { width, height } = this.scale;
+    let count = 5;
+
+    const countText = this.add
+      .text(width / 2, height / 2, `Підготовка до зміни... ${count}`, {
+        fontSize: '52px',
+        fontFamily: 'Arial Black, Arial',
+        fontStyle: 'bold',
+        color: '#fff176',
+        stroke: '#000',
+        strokeThickness: 6,
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setDepth(40);
+
+    // Pulsing tween
+    this.tweens.add({
+      targets: countText,
+      scaleX: 1.12,
+      scaleY: 1.12,
+      yoyo: true,
+      repeat: -1,
+      duration: 500,
+      ease: 'Sine.easeInOut',
+    });
+
+    const tick = this.time.addEvent({
+      delay: 1000,
+      repeat: 4,
+      callback: () => {
+        count -= 1;
+        if (count > 0) {
+          countText.setText(`Підготовка до зміни... ${count}`);
+        } else {
+          this.tweens.killTweensOf(countText);
+          countText.destroy();
+          this._startWave();
+        }
+      },
+    });
+  }
+
+  // ─── Pause System ─────────────────────────────────────────────────────────────
+
+  _setupPause() {
+    this._isPaused = false;
+    this._pauseOverlay = null;
+    this._pauseText = null;
+
+    const { width, height } = this.scale;
+
+    this._escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    this._pKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+
+    this._escKey.on('down', () => this._togglePause());
+    this._pKey.on('down', () => this._togglePause());
+  }
+
+  _togglePause() {
+    if (this.gameOver) return;
+    this._isPaused = !this._isPaused;
+
+    if (this._isPaused) {
+      this.physics.pause();
+      this.time.paused = true;
+
+      const { width, height } = this.scale;
+      this._pauseOverlay = this.add
+        .rectangle(width / 2, height / 2, width, height, 0x000000, 0.6)
+        .setDepth(80);
+
+      this._pauseText = this.add
+        .text(width / 2, height / 2, 'ПАУЗА', {
+          fontSize: '72px',
+          fontFamily: 'Arial Black, Arial',
+          fontStyle: 'bold',
+          color: '#ffffff',
+          stroke: '#000',
+          strokeThickness: 6,
+        })
+        .setOrigin(0.5)
+        .setDepth(81);
+    } else {
+      this.physics.resume();
+      this.time.paused = false;
+
+      if (this._pauseOverlay) {
+        this._pauseOverlay.destroy();
+        this._pauseOverlay = null;
+      }
+      if (this._pauseText) {
+        this._pauseText.destroy();
+        this._pauseText = null;
+      }
+    }
+  }
+
+  // ─── Background Music ─────────────────────────────────────────────────────────
+
+  _setupBGMusic() {
+    if (this.sound.get('bg_music')) {
+      this.sound.play('bg_music', { loop: true, volume: 0.2 });
+    }
+  }
+
   // ─── Wave Spawning ───────────────────────────────────────────────────────────
 
   _startWave() {
@@ -255,15 +366,15 @@ export default class BattleScene extends Phaser.Scene {
 
     if (roll < 0.45) {
       tier = 'intern';
-      speed = 80 + this.wave * 5;
+      speed = Phaser.Math.Between(10, 18);
       hpMult = 0.7;
     } else if (roll < 0.80) {
       tier = 'clerk';
-      speed = 55 + this.wave * 3;
+      speed = Phaser.Math.Between(14, 22);
       hpMult = 1.0;
     } else {
       tier = 'department_head';
-      speed = 35 + this.wave * 2;
+      speed = Phaser.Math.Between(18, 25);
       hpMult = 2.2;
     }
 
@@ -362,7 +473,7 @@ export default class BattleScene extends Phaser.Scene {
     // Check wave completion
     if (this._waveInProgress && this.enemies.length === 0 && this._enemiesLeftInWave <= 0) {
       this._waveInProgress = false;
-      this.time.delayedCall(2500, () => {
+      this.time.delayedCall(5500, () => {
         if (!this.gameOver) {
           this.wave += 1;
           this._startWave();

@@ -128,6 +128,16 @@ export default class UIScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(42);
 
+    // Description label
+    this.add
+      .text(iconX, iconY + 40, 'Стріляє борщем', {
+        fontSize: '8px',
+        fontFamily: 'Arial',
+        color: '#b0bec5',
+      })
+      .setOrigin(0.5)
+      .setDepth(42);
+
     // Create a "ghost" sprite that follows the pointer while dragging
     this._ghostGoose = this.add
       .image(0, 0, 'goose')
