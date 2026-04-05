@@ -7,6 +7,10 @@ const config = {
     width: 800,
     height: 600,
     backgroundColor: '#2d5a27',
+    physics: {
+        default: 'arcade',
+        arcade: { debug: false }
+    },
     scene: [GameScene, UIScene]
 };
 

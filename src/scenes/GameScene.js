@@ -99,8 +99,11 @@ export class GameScene extends Phaser.Scene {
         // Clean up enemies that reached the bottom
         this.enemies.getChildren().forEach(enemy => {
             if (enemy.y > 620) {
+                if (enemy.label) enemy.label.destroy();
                 enemy.destroy();
                 this.loseLife();
+            } else if (enemy.label) {
+                enemy.label.setPosition(enemy.x, enemy.y);
             }
         });
     }
@@ -114,12 +117,11 @@ export class GameScene extends Phaser.Scene {
         const speed = 80 + (this.wave * 15);
         enemy.body.setVelocityY(speed);
 
-        this.enemies.add(enemy);
+        // Label attached to enemy so it's destroyed together
+        const label = this.add.text(x, -20, '📋', { fontSize: '24px' }).setOrigin(0.5);
+        enemy.label = label;
 
-        // Add a label so enemies look like bureaucrats
-        this.add.text(x, -20, '📋', { fontSize: '24px' })
-            .setOrigin(0.5)
-            .setName('label_' + enemy.name);
+        this.enemies.add(enemy);
     }
 
     fireBullet() {
@@ -131,6 +133,7 @@ export class GameScene extends Phaser.Scene {
 
     hitEnemy(bullet, enemy) {
         bullet.destroy();
+        if (enemy.label) enemy.label.destroy();
         enemy.destroy();
 
         this.score += 10 * this.wave;
@@ -147,6 +150,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     playerHit(player, enemy) {
+        if (enemy.label) enemy.label.destroy();
         enemy.destroy();
         this.loseLife();
     }
@@ -185,6 +189,12 @@ export class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(11);
 
         this.input.keyboard.once('keydown-R', () => {
+            const ui = this.scene.get('UIScene');
+            if (ui) {
+                ui.updateWave(1);
+                ui.updateScore(0);
+                ui.updateLives(3);
+            }
             this.scene.restart();
         });
     }
@@ -196,9 +206,9 @@ export class GameScene extends Phaser.Scene {
         this.scene.get('UIScene').updateWave(this.wave);
 
         // Делаем врагов быстрее с каждой волной (до определенного предела)
-        let newDelay = Math.max(1000, 3000 - (this.wave * 200));
+        let spawnDelay = Math.max(1000, 3000 - (this.wave * 200));
         this.spawnTimer.reset({
-            delay: newDelay,
+            delay: spawnDelay,
             callback: this.spawnEnemy,
             callbackScope: this,
             loop: true
