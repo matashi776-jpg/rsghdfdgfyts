@@ -12,6 +12,10 @@ const HERO_X = 60;
 const HERO_Y = 300;
 const DEATH_X = 100;
 
+// Balance constants
+const NIGHT_SHIFT_SPEED_MULT = 1.3;
+const STEAM_SLOW_MULT = 0.5;
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -23,9 +27,13 @@ export default class BattleScene extends Phaser.Scene {
     this.lives = 1; // one hit = game over
     this.enemies = [];
     this.towers = [];
+    this.steamTowers = [];
     this.gameOver = false;
     this._waveInProgress = false;
     this._enemiesLeftInWave = 0;
+    this._paused = false;
+    this._nightShiftActive = false;
+    this._totalGoldEarned = parseInt(localStorage.getItem('totalGoldEarned') || '0', 10);
   }
 
   create() {
@@ -34,6 +42,8 @@ export default class BattleScene extends Phaser.Scene {
     this._buildProjectilePool();
     this._buildParticleSystem();
     this._setupPhysics();
+    this._setupPause();
+    this._playBgMusic();
     this._startWave();
   }
 
@@ -209,6 +219,12 @@ export default class BattleScene extends Phaser.Scene {
     this._waveInProgress = true;
     this._waveLabel.setText(`Wave ${this.wave}`);
 
+    // Persist record
+    const saved = parseInt(localStorage.getItem('maxWaveReached') || '1', 10);
+    if (this.wave > saved) {
+      localStorage.setItem('maxWaveReached', String(this.wave));
+    }
+
     // Emit event so UIScene can refresh
     this.events.emit('waveChanged', this.wave);
 
@@ -217,8 +233,50 @@ export default class BattleScene extends Phaser.Scene {
     this._enemiesKilledInWave = 0;
     this._totalInWave = waveSize;
 
-    // Show wave announcement
     const { width, height } = this.scale;
+
+    // ── Night Shift activation at wave 10 ──────────────────────────────────
+    if (this.wave === 10 && !this._nightShiftActive) {
+      this._nightShiftActive = true;
+
+      const nightOverlay = this.add
+        .rectangle(width / 2, height / 2, width, height, 0x000000, 0)
+        .setDepth(2);
+      this.tweens.add({ targets: nightOverlay, alpha: 0.4, duration: 2000 });
+
+      const nightAlert = this.add
+        .text(width / 2, height / 2 - 60, 'НОЧНА ЗМІНА:\nЗаочники хочуть додому!', {
+          fontSize: '36px',
+          fontFamily: 'Arial Black, Arial',
+          fontStyle: 'bold',
+          color: '#ff1744',
+          stroke: '#000',
+          strokeThickness: 5,
+          align: 'center',
+        })
+        .setOrigin(0.5)
+        .setDepth(36);
+
+      this.tweens.add({
+        targets: nightAlert,
+        scaleX: 1.25,
+        scaleY: 1.25,
+        duration: 280,
+        yoyo: true,
+        repeat: 4,
+        onComplete: () => {
+          this.tweens.add({
+            targets: nightAlert,
+            alpha: 0,
+            duration: 800,
+            delay: 600,
+            onComplete: () => nightAlert.destroy(),
+          });
+        },
+      });
+    }
+
+    // ── Wave announcement ───────────────────────────────────────────────────
     const ann = this.add
       .text(width / 2, height / 2 - 40, `⚠  Wave ${this.wave}  ⚠`, {
         fontSize: '36px',
@@ -240,12 +298,44 @@ export default class BattleScene extends Phaser.Scene {
       onComplete: () => ann.destroy(),
     });
 
-    // Spawn enemies with a stagger
-    for (let i = 0; i < waveSize; i++) {
-      this.time.delayedCall(i * 1500 + 800, () => {
-        if (!this.gameOver) this._spawnEnemy();
+    // ── 5-second preparation countdown ─────────────────────────────────────
+    const countText = this.add
+      .text(width / 2, height / 2 + 30, '', {
+        fontSize: '54px',
+        fontFamily: 'Arial Black, Arial',
+        fontStyle: 'bold',
+        color: '#ffeb3b',
+        stroke: '#000',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(31);
+
+    for (let c = 5; c >= 1; c--) {
+      this.time.delayedCall((5 - c) * 1000, () => {
+        if (this.gameOver) return;
+        countText.setText(`Підготовка до зміни... ${c}`);
+        this.tweens.killTweensOf(countText);
+        this.tweens.add({
+          targets: countText,
+          scaleX: { from: 1.3, to: 1 },
+          scaleY: { from: 1.3, to: 1 },
+          duration: 700,
+          ease: 'Sine.easeOut',
+        });
       });
     }
+
+    // ── Spawn enemies after the 5-second delay ──────────────────────────────
+    this.time.delayedCall(5000, () => {
+      if (this.gameOver) return;
+      countText.destroy();
+      for (let i = 0; i < waveSize; i++) {
+        this.time.delayedCall(i * 4500 + 200, () => {
+          if (!this.gameOver) this._spawnEnemy();
+        });
+      }
+    });
   }
 
   _spawnEnemy() {
@@ -255,16 +345,21 @@ export default class BattleScene extends Phaser.Scene {
 
     if (roll < 0.45) {
       tier = 'intern';
-      speed = 80 + this.wave * 5;
+      speed = Phaser.Math.Between(10, 20) + this.wave;
       hpMult = 0.7;
     } else if (roll < 0.80) {
       tier = 'clerk';
-      speed = 55 + this.wave * 3;
+      speed = Phaser.Math.Between(8, 16) + this.wave;
       hpMult = 1.0;
     } else {
       tier = 'department_head';
-      speed = 35 + this.wave * 2;
+      speed = Phaser.Math.Between(5, 12) + this.wave;
       hpMult = 2.2;
+    }
+
+    // Night Shift: permanent 30% speed increase for all enemies from wave 10 onwards
+    if (this._nightShiftActive) {
+      speed = Math.ceil(speed * NIGHT_SHIFT_SPEED_MULT);
     }
 
     const hp = Math.floor(Calculator.enemyHP(this.wave) * hpMult);
@@ -304,7 +399,7 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Main Update ─────────────────────────────────────────────────────────────
 
   update() {
-    if (this.gameOver) return;
+    if (this.gameOver || this._paused) return;
 
     // Update enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -347,9 +442,11 @@ export default class BattleScene extends Phaser.Scene {
 
         if (Math.abs(dx) < hitRadius && Math.abs(dy) < hitRadius) {
           // Hit!
-          this._emitHitExplosion(proj.x, proj.y);
+          const dmg = proj._damage || 30;
+          this._emitRedSquares(proj.x, proj.y);
+          this._floatingDamage(enemy.sprite.x, enemy.sprite.y, dmg);
           this._recycleProjectile(proj);
-          enemy.takeDamage(proj._damage || 30);
+          enemy.takeDamage(dmg);
 
           if (!enemy.alive) {
             this._onEnemyKilled(enemy, j);
@@ -393,10 +490,19 @@ export default class BattleScene extends Phaser.Scene {
 
     const reward = Calculator.goldReward(this.wave);
     this.gold += reward;
+
+    // Persist total gold earned
+    this._totalGoldEarned += reward;
+    localStorage.setItem('totalGoldEarned', String(this._totalGoldEarned));
+
     this.events.emit('goldChanged', this.gold);
 
-    // Screen shake
-    this.cameras.main.shake(80, 0.006);
+    // Camera shake – bigger for bosses
+    if (enemy.tier === 'department_head') {
+      this.cameras.main.shake(200, 0.01);
+    } else {
+      this.cameras.main.shake(80, 0.006);
+    }
 
     // Floating gold text
     const ex = enemy.sprite ? enemy.sprite.x : 400;
@@ -409,11 +515,218 @@ export default class BattleScene extends Phaser.Scene {
   placeTower(laneIndex) {
     const y = LANES[laneIndex];
     // Place slightly right of hero, stagger if multiple geese on same lane
-    const laneTowers = this.towers.filter((t) => t.lane === laneIndex);
-    const x = 130 + laneTowers.length * 80;
+    const allInLane = [
+      ...this.towers.filter((t) => t.lane === laneIndex),
+      ...this.steamTowers.filter((t) => t.lane === laneIndex),
+    ];
+    const x = 130 + allInLane.length * 80;
     const tower = new Tower(this, x, y, laneIndex);
     this.towers.push(tower);
     return tower;
+  }
+
+  // ─── Steam Tower Placement ───────────────────────────────────────────────────
+
+  placeSteamTower(laneIndex) {
+    const y = LANES[laneIndex];
+    const allInLane = [
+      ...this.towers.filter((t) => t.lane === laneIndex),
+      ...this.steamTowers.filter((t) => t.lane === laneIndex),
+    ];
+    const x = 130 + allInLane.length * 80;
+
+    const sprite = this.physics.add.sprite(x, y, 'goose');
+    sprite.setScale(0.15);
+    sprite.body.allowGravity = false;
+    sprite.setImmovable(true);
+    sprite.setTint(0xadd8e6);
+    sprite.setDepth(8);
+
+    this.tweens.add({
+      targets: sprite,
+      scaleX: 0.155,
+      scaleY: 0.145,
+      duration: 1400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    const steamTower = { sprite, lane: laneIndex };
+    this.steamTowers.push(steamTower);
+
+    steamTower._timer = this.time.addEvent({
+      delay: 2500,
+      callback: () => this._fireSteamAttack(steamTower),
+      loop: true,
+    });
+
+    return steamTower;
+  }
+
+  _fireSteamAttack(steamTower) {
+    if (this.gameOver || this._paused) return;
+    if (!steamTower.sprite || !steamTower.sprite.active) return;
+
+    const tx = steamTower.sprite.x;
+    const ty = steamTower.sprite.y;
+    const STEAM_RANGE = 100;
+
+    // Visual: white expanding circle
+    const circle = this.add.circle(tx, ty, 10, 0xffffff, 0.7).setDepth(12);
+    this.tweens.add({
+      targets: circle,
+      scaleX: STEAM_RANGE / 10,
+      scaleY: STEAM_RANGE / 10,
+      alpha: 0,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => circle.destroy(),
+    });
+
+    // Slow enemies within range
+    for (const enemy of this.enemies) {
+      if (!enemy.alive || !enemy.sprite || !enemy.sprite.active) continue;
+      if (enemy._slowed) continue;
+      const dx = enemy.sprite.x - tx;
+      const dy = enemy.sprite.y - ty;
+      if (Math.sqrt(dx * dx + dy * dy) <= STEAM_RANGE) {
+        this._applySlowEffect(enemy);
+      }
+    }
+  }
+
+  _applySlowEffect(enemy) {
+    enemy._originalSpeed = enemy.speed;
+    enemy.speed = Math.max(1, Math.floor(enemy.speed * STEAM_SLOW_MULT));
+    enemy._slowed = true;
+    enemy.sprite.setTint(0xadd8e6);
+
+    this.time.delayedCall(3000, () => {
+      if (!enemy.alive || !enemy.sprite) return;
+      enemy.speed = enemy._originalSpeed;
+      enemy._slowed = false;
+      enemy.sprite.clearTint();
+    });
+  }
+
+  // ─── Pause System ─────────────────────────────────────────────────────────────
+
+  _setupPause() {
+    const { width, height } = this.scale;
+
+    this._pauseOverlay = this.add
+      .rectangle(width / 2, height / 2, width, height, 0x000000, 0.6)
+      .setDepth(100)
+      .setVisible(false);
+
+    this._pauseText = this.add
+      .text(width / 2, height / 2, 'ПАУЗА', {
+        fontSize: '72px',
+        fontFamily: 'Arial Black, Arial',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#000',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(101)
+      .setVisible(false);
+
+    this._pauseHint = this.add
+      .text(width / 2, height / 2 + 70, 'Натисніть P або ESC щоб продовжити', {
+        fontSize: '16px',
+        fontFamily: 'Arial',
+        color: '#cccccc',
+        stroke: '#000',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(101)
+      .setVisible(false);
+
+    this.input.keyboard.on('keydown-ESC', () => this._togglePause());
+    this.input.keyboard.on('keydown-P', () => this._togglePause());
+  }
+
+  _togglePause() {
+    if (this.gameOver) return;
+    this._paused = !this._paused;
+
+    if (this._paused) {
+      this.physics.pause();
+      this.time.paused = true;
+      this._pauseOverlay.setVisible(true);
+      this._pauseText.setVisible(true);
+      this._pauseHint.setVisible(true);
+    } else {
+      this.physics.resume();
+      this.time.paused = false;
+      this._pauseOverlay.setVisible(false);
+      this._pauseText.setVisible(false);
+      this._pauseHint.setVisible(false);
+    }
+  }
+
+  // ─── Audio ────────────────────────────────────────────────────────────────────
+
+  _playBgMusic() {
+    try {
+      const existing = this.sound.get('bg_music');
+      if (existing) {
+        if (!existing.isPlaying) existing.play({ loop: true, volume: 0.2 });
+      } else {
+        this.sound.play('bg_music', { loop: true, volume: 0.2 });
+      }
+    } catch (e) {
+      console.warn('bg_music unavailable:', e.message);
+    }
+  }
+
+  // ─── Game Juice: Red Square Particles ────────────────────────────────────────
+
+  _emitRedSquares(x, y) {
+    const count = Phaser.Math.Between(3, 5);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Phaser.Math.Between(50, 130);
+      const size = Phaser.Math.Between(3, 7);
+      const sq = this.add.rectangle(x, y, size, size, 0xcc1111, 1).setDepth(15);
+      this.tweens.add({
+        targets: sq,
+        x: x + Math.cos(angle) * speed,
+        y: y + Math.sin(angle) * speed + Phaser.Math.Between(20, 50), // gravity pull
+        alpha: 0,
+        duration: Phaser.Math.Between(300, 600),
+        ease: 'Power2',
+        onComplete: () => sq.destroy(),
+      });
+    }
+  }
+
+  // ─── Game Juice: Floating Damage Numbers ─────────────────────────────────────
+
+  _floatingDamage(x, y, amount) {
+    const t = this.add
+      .text(x, y - 10, String(amount), {
+        fontSize: '13px',
+        fontFamily: 'Arial',
+        fontStyle: 'bold',
+        color: '#ff4444',
+        stroke: '#000',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
+
+    this.tweens.add({
+      targets: t,
+      y: y - 55,
+      alpha: 0,
+      duration: 600,
+      ease: 'Sine.easeOut',
+      onComplete: () => t.destroy(),
+    });
   }
 
   // ─── Ability: Medical Ointment ───────────────────────────────────────────────

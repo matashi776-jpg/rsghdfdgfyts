@@ -10,6 +10,9 @@ export default class KhutirScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    // Start background music (safe – does nothing if file is missing)
+    this._playBgMusic();
+
     // Background gradient: green farm on left, grey office on right
     const bg = this.add.graphics();
     bg.fillGradientStyle(0x4caf50, 0x4caf50, 0x9e9e9e, 0x9e9e9e, 1);
@@ -39,6 +42,19 @@ export default class KhutirScene extends Phaser.Scene {
         fontSize: '18px',
         fontFamily: 'Arial',
         color: '#fffde7',
+        stroke: '#000',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(5);
+
+    // High-score record read from localStorage
+    const maxWave = parseInt(localStorage.getItem('maxWaveReached') || '1', 10);
+    this.add
+      .text(width / 2, 265, `Рекорд: Хвиля ${maxWave}`, {
+        fontSize: '15px',
+        fontFamily: 'Arial',
+        color: '#ffd54f',
         stroke: '#000',
         strokeThickness: 2,
       })
@@ -109,5 +125,18 @@ export default class KhutirScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(5);
+  }
+
+  _playBgMusic() {
+    try {
+      const existing = this.sound.get('bg_music');
+      if (existing) {
+        if (!existing.isPlaying) existing.play({ loop: true, volume: 0.2 });
+      } else {
+        this.sound.play('bg_music', { loop: true, volume: 0.2 });
+      }
+    } catch (e) {
+      console.warn('bg_music unavailable:', e.message);
+    }
   }
 }

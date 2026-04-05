@@ -6,6 +6,7 @@
  */
 
 const GOOSE_COST = 50;
+const STEAM_GOOSE_COST = 100;
 const OINTMENT_COST = 100;
 const OINTMENT_COOLDOWN = 30000; // 30 s
 const LANE_Y = [150, 300, 450];
@@ -25,6 +26,7 @@ export default class UIScene extends Phaser.Scene {
     this._buildTopBar(width);
     this._buildBottomBar(width, height);
     this._buildDragIcon(width, height);
+    this._buildSteamGooseDragIcon(width, height);
     this._buildOintmentButton(width, height);
     this._buildLaneDropZones(width, height);
 
@@ -128,6 +130,16 @@ export default class UIScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(42);
 
+    // Tooltip description
+    this.add
+      .text(iconX, iconY - 26, 'Стріляє борщем', {
+        fontSize: '8px',
+        fontFamily: 'Arial',
+        color: '#b0bec5',
+      })
+      .setOrigin(0.5)
+      .setDepth(42);
+
     // Create a "ghost" sprite that follows the pointer while dragging
     this._ghostGoose = this.add
       .image(0, 0, 'goose')
@@ -181,6 +193,100 @@ export default class UIScene extends Phaser.Scene {
     // Visual feedback
     const { width } = this.scale;
     this._floatingText(width / 2, 55, `-${GOOSE_COST} ₴  [Goose] placed!`, '#80cbc4');
+  }
+
+  // ─── Draggable Steam Goose Icon ──────────────────────────────────────────────
+
+  _buildSteamGooseDragIcon(width, height) {
+    const iconX = 130;
+    const iconY = height - 38;
+
+    // Background slot (darker blue to distinguish from regular goose)
+    this.add
+      .rectangle(iconX, iconY, 60, 60, 0x1a3a4f, 0.95)
+      .setDepth(41)
+      .setStrokeStyle(2, 0x4fc3f7);
+
+    // Steam goose icon with light-blue tint
+    this.add
+      .image(iconX, iconY, 'goose')
+      .setScale(0.12)
+      .setDepth(42)
+      .setTint(0xadd8e6);
+
+    // Invisible drag region
+    this._steamGooseDragZone = this.add
+      .zone(iconX, iconY, 60, 60)
+      .setInteractive({ draggable: true })
+      .setDepth(43);
+
+    // Cost label
+    this.add
+      .text(iconX, iconY + 28, `${STEAM_GOOSE_COST} ₴`, {
+        fontSize: '10px',
+        fontFamily: 'Arial',
+        color: '#80deea',
+        stroke: '#000',
+        strokeThickness: 1,
+      })
+      .setOrigin(0.5)
+      .setDepth(42);
+
+    // Tooltip description
+    this.add
+      .text(iconX, iconY - 26, 'Замедляє парою', {
+        fontSize: '8px',
+        fontFamily: 'Arial',
+        color: '#b0bec5',
+      })
+      .setOrigin(0.5)
+      .setDepth(42);
+
+    // Ghost sprite (tinted blue) that follows the pointer while dragging
+    this._ghostSteamGoose = this.add
+      .image(0, 0, 'goose')
+      .setScale(0.13)
+      .setAlpha(0.75)
+      .setTint(0xadd8e6)
+      .setDepth(60)
+      .setVisible(false);
+
+    this.input.setDraggable(this._steamGooseDragZone);
+
+    this._steamGooseDragZone.on('dragstart', (pointer) => {
+      if (this._battle.gold < STEAM_GOOSE_COST) {
+        this._showNotEnoughGold();
+        return;
+      }
+      this._ghostSteamGoose.setVisible(true);
+      this._ghostSteamGoose.setPosition(pointer.x, pointer.y);
+    });
+
+    this._steamGooseDragZone.on('drag', (pointer) => {
+      this._ghostSteamGoose.setPosition(pointer.x, pointer.y);
+      this._highlightLane(pointer.y);
+    });
+
+    this._steamGooseDragZone.on('dragend', (pointer) => {
+      this._ghostSteamGoose.setVisible(false);
+      this._clearLaneHighlights();
+
+      if (this._battle.gold < STEAM_GOOSE_COST) return;
+
+      const lane = this._getLaneFromY(pointer.y);
+      if (lane !== -1) {
+        this._purchaseSteamGoose(lane);
+      }
+    });
+  }
+
+  _purchaseSteamGoose(laneIndex) {
+    this._battle.gold -= STEAM_GOOSE_COST;
+    this._goldText.setText(`₴ ${this._battle.gold}`);
+    this._battle.placeSteamTower(laneIndex);
+
+    const { width } = this.scale;
+    this._floatingText(width / 2, 55, `-${STEAM_GOOSE_COST} ₴  [Steam Goose] placed!`, '#4fc3f7');
   }
 
   // ─── Lane Drop Highlights ────────────────────────────────────────────────────
@@ -331,6 +437,7 @@ export default class UIScene extends Phaser.Scene {
 
   _disableUI() {
     if (this._gooseDragZone) this._gooseDragZone.disableInteractive();
+    if (this._steamGooseDragZone) this._steamGooseDragZone.disableInteractive();
     if (this._ointmentBg) this._ointmentBg.disableInteractive();
   }
 }
