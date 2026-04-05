@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import Calculator from '../utils/Calculator.js';
 
+const DAMAGE_FLASH_DURATION = 100; // ms the enemy flashes red after taking a hit
+const BOSS_SPAWN_CHANCE = 0.2;     // 20% probability of spawning a boss on a boss wave
+
 export default class BattleScene extends Phaser.Scene {
     constructor() {
         super({ key: 'BattleScene' });
@@ -211,7 +214,7 @@ export default class BattleScene extends Phaser.Scene {
         } else {
             // Эффект "мигания" врага при получении урона, если он выжил
             enemy.setTint(0xff0000);
-            this.time.delayedCall(100, () => { if (enemy.active) enemy.clearTint(); });
+            this.time.delayedCall(DAMAGE_FLASH_DURATION, () => { if (enemy.active) enemy.clearTint(); });
         }
     }
 
@@ -221,7 +224,7 @@ export default class BattleScene extends Phaser.Scene {
 
         // Каждая 5-я волна спавнит Босса с вероятностью 20%
         let isBossWave = (this.wave % 5 === 0);
-        let spawnBoss = isBossWave && Math.random() > 0.8;
+        let spawnBoss = isBossWave && Math.random() < BOSS_SPAWN_CHANCE;
 
         let enemy = this.enemies.create(850, y, 'bureaucrat');
 
