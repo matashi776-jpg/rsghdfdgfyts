@@ -52,6 +52,7 @@ export default class BattleScene extends Phaser.Scene {
         let goose = this.add.sprite(x, closestLane, 'goose').setScale(0.15);
         goose.fireRate = 1500; // Базовая скорость стрельбы
         goose.baseDamage = 30;
+        goose.level = 1;
 
         // Анимация дыхания
         this.tweens.add({
@@ -76,7 +77,7 @@ export default class BattleScene extends Phaser.Scene {
             projectile.setActive(true).setVisible(true).setScale(0.08);
             projectile.body.reset(goose.x + 30, goose.y);
             projectile.setVelocityX(300);
-            projectile.damage = Calculator.getTowerDamage(goose.baseDamage, 1);
+            projectile.damage = Calculator.getTowerDamage(goose.baseDamage, goose.level);
 
             this.tweens.add({ targets: projectile, angle: 360, duration: 1000, loop: -1 });
         }
@@ -110,7 +111,7 @@ export default class BattleScene extends Phaser.Scene {
             this.gold += Calculator.getGoldReward(this.wave);
 
             // Всплывающее золото
-            let goldText = this.add.text(enemy.x, enemy.y, '+Gold', { fontSize: '16px', fill: '#00FF00' });
+            let goldText = this.add.text(enemy.x, enemy.y, `+${Calculator.getGoldReward(this.wave)}g`, { fontSize: '16px', fill: '#00FF00' });
             this.tweens.add({ targets: goldText, y: '-=30', alpha: 0, duration: 1000, onComplete: () => goldText.destroy() });
 
             // Безопасное удаление врага
