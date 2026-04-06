@@ -320,7 +320,7 @@ export default class BattleScene extends Phaser.Scene {
     this._bossPhase  = 1;
     this._bossTitleTxt.setVisible(true);
 
-    // Boss arrival: speed up BGM + VFX fanfare
+    // Boss arrival: BGM rate 1.25 + VFX fanfare
     this.audio.setBossMode(true);
     this.vfx.shake(400, 0.025);
     this.vfx.screenGlitch(600);

@@ -61,7 +61,7 @@ export default class AudioManager {
   }
 
   /**
-   * Accelerate the BGM for boss encounters (rate 1.25×) or reset to normal.
+   * Accelerate the BGM for boss encounters (rate 1.25) or reset to normal.
    */
   setBossMode(active) {
     if (active === this._bossMode) return;
