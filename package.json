@@ -2,10 +2,13 @@
   "name": "lanchyn-vs-savok",
   "version": "1.0.0",
   "description": "Lanchyn vs Savok – 2D Tactical Tower Defense",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean-assets": "node tools/cleanAssets.js",
+    "check-style": "node tools/checkStyle.js"
   },
   "dependencies": {
     "phaser": "^3.70.0"
