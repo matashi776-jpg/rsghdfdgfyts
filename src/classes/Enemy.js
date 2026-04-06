@@ -1,6 +1,6 @@
 /**
  * Enemy.js
- * Represents a bureaucrat enemy unit.
+ * Represents an enemy unit (bureaucrat or boss).
  */
 export default class Enemy {
   /**
@@ -9,7 +9,7 @@ export default class Enemy {
    * @param {number} y
    * @param {number} hp
    * @param {number} speed   – pixels per second
-   * @param {string} tier    – 'intern' | 'clerk' | 'department_head'
+   * @param {string} tier    – 'bureaucrat' | 'boss' | 'intern' | 'clerk' | 'department_head'
    */
   constructor(scene, x, y, hp, speed, tier) {
     this.scene = scene;
@@ -19,30 +19,45 @@ export default class Enemy {
     this.speed = speed;
     this.alive = true;
 
-    // Colour coding per tier
+    // Support new named types as well as legacy tiers
+    const isBoss = tier === 'boss';
+    const isBureaucrat = tier === 'bureaucrat';
+
+    // Colour coding per tier (legacy fallback)
     const colours = {
       intern: 0xaaaaaa,
       clerk: 0x888888,
       department_head: 0x555555,
+      bureaucrat: 0x888888,
+      boss: 0x333366,
     };
     const sizes = {
       intern: { w: 22, h: 32 },
       clerk: { w: 28, h: 38 },
       department_head: { w: 36, h: 48 },
+      bureaucrat: { w: 28, h: 38 },
+      boss: { w: 64, h: 80 },
     };
     const { w, h } = sizes[tier] || sizes.intern;
 
-    // Create the physics sprite using a generated texture key
-    const texKey = `enemy_tex_${tier}`;
-    if (!scene.textures.exists(texKey)) {
-      const gfx = scene.make.graphics({ x: 0, y: 0, add: false });
-      gfx.fillStyle(colours[tier] || 0xaaaaaa, 1);
-      gfx.fillRect(0, 0, w, h);
-      // Briefcase detail
-      gfx.fillStyle(0x333333, 1);
-      gfx.fillRect(Math.floor(w * 0.3), Math.floor(h * 0.55), Math.floor(w * 0.4), Math.floor(h * 0.25));
-      gfx.generateTexture(texKey, w, h);
-      gfx.destroy();
+    // Use named asset texture if available, otherwise generate a fallback
+    let texKey;
+    if ((isBureaucrat || isBoss) && scene.textures.exists(tier)) {
+      texKey = tier;
+    } else {
+      texKey = `enemy_tex_${tier}`;
+      if (!scene.textures.exists(texKey)) {
+        const gfx = scene.make.graphics({ x: 0, y: 0, add: false });
+        gfx.fillStyle(colours[tier] || 0xaaaaaa, 1);
+        gfx.fillRect(0, 0, w, h);
+        // Briefcase detail for bureaucrat-type enemies
+        if (!isBoss) {
+          gfx.fillStyle(0x333333, 1);
+          gfx.fillRect(Math.floor(w * 0.3), Math.floor(h * 0.55), Math.floor(w * 0.4), Math.floor(h * 0.25));
+        }
+        gfx.generateTexture(texKey, w, h);
+        gfx.destroy();
+      }
     }
 
     this.sprite = scene.physics.add.sprite(x, y, texKey);
@@ -50,6 +65,10 @@ export default class Enemy {
     this.sprite.body.allowGravity = false;
     this.sprite.setDepth(6);
     this.sprite.enemyRef = this;
+    // Attach health variables directly to the sprite
+    this.sprite.hp = this.hp;
+    this.sprite.maxHP = this.maxHP;
+    this.sprite.enemyTier = tier;
 
     // Drop shadow – semi-transparent oval under the bureaucrat
     const shadowW = w * 1.6;
@@ -120,8 +139,10 @@ export default class Enemy {
   takeDamage(amount) {
     if (!this.alive) return;
     this.hp -= amount;
+    if (this.sprite) this.sprite.hp = this.hp;
     if (this.hp <= 0) {
       this.hp = 0;
+      if (this.sprite) this.sprite.hp = 0;
       this.die();
     } else {
       this._drawHPBar();

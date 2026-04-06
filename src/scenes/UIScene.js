@@ -8,17 +8,17 @@
 const UNIT_DEFS = [
   {
     id: 'goose',
-    label: 'Goose',
+    label: 'Assault Goose',
     cost: 100,
-    desc: 'Standard defender.\nThrows hot borsch.',
+    desc: 'Rambo in feathers.\nShoots every 1000ms.',
     color: 0x1a4a2e,
     borderColor: 0x44cc88,
   },
   {
     id: 'superHero',
-    label: 'Super Hero',
+    label: 'Tractor Hero',
     cost: 500,
-    desc: 'Heavy unit.\nHigh damage, high health.',
+    desc: 'Heavy hitter.\nShoots every 2500ms, 5x damage.',
     color: 0x2a1a4a,
     borderColor: 0x8844cc,
   },

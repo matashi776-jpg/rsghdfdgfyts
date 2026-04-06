@@ -552,23 +552,24 @@ export default class BattleScene extends Phaser.Scene {
 
   _spawnEnemy() {
     const lane = LANES[Math.floor(Math.random() * LANES.length)];
-    const roll = Math.random();
-    let tier, hpMult;
+    const isBoss = Math.random() < 0.20;
 
-    if (roll < 0.45) {
-      tier = 'intern';
-      hpMult = 0.7;
-    } else if (roll < 0.80) {
-      tier = 'clerk';
-      hpMult = 1.0;
+    let tier, hp, speed;
+    if (isBoss) {
+      tier = 'boss';
+      hp = 15;
+      speed = 15;
     } else {
-      tier = 'department_head';
-      hpMult = 2.2;
+      tier = 'bureaucrat';
+      hp = 2;
+      speed = 40;
     }
-    const speed = BUREAUCRAT_SPEED;
 
-    const hp = Math.floor(Calculator.enemyHP(this.wave) * hpMult);
     const enemy = new Enemy(this, SPAWN_X, lane, hp, speed, tier);
+    // Scale boss sprite to look massive
+    if (isBoss && enemy.sprite) {
+      enemy.sprite.setScale(1.8);
+    }
     this.enemies.push(enemy);
     this.enemiesGroup.add(enemy.sprite);
   }
@@ -585,6 +586,10 @@ export default class BattleScene extends Phaser.Scene {
     proj.body.gravity.y = 0;
 
     proj.setVelocity(PROJECTILE_SPEED, 0);
+
+    // Tractor Hero (superHero) fires a scaled-up borsch projectile
+    const isSuperHero = tower.unitType === 'superHero';
+    proj.setScale(isSuperHero ? 0.22 : 0.08);
 
     // Rotation tween
     this.tweens.add({
@@ -647,6 +652,7 @@ export default class BattleScene extends Phaser.Scene {
     this.tweens.killTweensOf(proj);
     proj.setActive(false).setVisible(false);
     proj.setVelocity(0, 0);
+    proj.setScale(0.08);
     proj.body.enable = false;
     proj.body.gravity.y = 0; // reset arc gravity
     proj.setAngle(0);
@@ -663,12 +669,13 @@ export default class BattleScene extends Phaser.Scene {
     this._enemiesLeftInWave = Math.max(0, this._enemiesLeftInWave - 1);
     this._enemiesKilledInWave = (this._enemiesKilledInWave || 0) + 1;
 
-    const reward = Calculator.goldReward(this.wave);
+    const isBoss = enemy.tier === 'boss';
+    const reward = isBoss ? 300 : 50;
     this.gold += reward;
     this.events.emit('goldChanged', this.gold);
 
     // Screen shake
-    this.cameras.main.shake(80, 0.006);
+    this.cameras.main.shake(isBoss ? 160 : 80, isBoss ? 0.012 : 0.006);
 
     // Floating gold text
     const ex = enemy.sprite ? enemy.sprite.x : 400;
