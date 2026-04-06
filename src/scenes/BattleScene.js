@@ -23,6 +23,10 @@ const GRID_BOTTOM = 480;
 // PvZ balance: all bureaucrats crawl at 0.5 px/frame (≈ 30 px/s at 60 fps)
 const BUREAUCRAT_SPEED = 30;
 const ORDERS_PHASE_DURATION = 10; // seconds
+const ENEMY_BOUNTY = 15; // ₴ awarded per bureaucrat kill
+const SPAWN_DELAY_BASE = 3000; // ms between enemy spawns on wave 1
+const SPAWN_DELAY_STEP = 200;  // ms reduction per wave
+const SPAWN_DELAY_MIN  = 800;  // hard floor
 
 export default class BattleScene extends Phaser.Scene {
   constructor() {
@@ -240,6 +244,29 @@ export default class BattleScene extends Phaser.Scene {
     });
   }
 
+  _floatingBountyText(x, y, text) {
+    const t = this.add
+      .text(x, y, text, {
+        fontSize: '14px',
+        fontFamily: 'Arial',
+        fontStyle: 'bold',
+        color: '#00e676',
+        stroke: '#000',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
+
+    this.tweens.add({
+      targets: t,
+      y: y - 50,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Sine.easeOut',
+      onComplete: () => t.destroy(),
+    });
+  }
+
   // ─── Physics ──────────────────────────────────────────────────────────────────
 
   _setupPhysics() {
@@ -372,34 +399,51 @@ export default class BattleScene extends Phaser.Scene {
     this._enemiesKilledInWave = 0;
     this._totalInWave = waveSize;
 
-    // Show wave announcement
+    // Show massive pulsing wave announcement
     const { width, height } = this.scale;
     const ann = this.add
-      .text(width / 2, height / 2 - 40, `⚠  Wave ${this.wave}  ⚠`, {
-        fontSize: '36px',
+      .text(width / 2, height / 2, `WAVE ${this.wave}`, {
+        fontSize: '96px',
         fontFamily: 'Arial Black, Arial',
         fontStyle: 'bold',
         color: '#fff176',
         stroke: '#b71c1c',
-        strokeThickness: 5,
+        strokeThickness: 8,
+        shadow: { offsetX: 0, offsetY: 0, color: '#ff0000', blur: 24, fill: true },
       })
       .setOrigin(0.5)
-      .setDepth(30);
+      .setDepth(30)
+      .setScale(0.5);
 
+    // Pulse in, then fade out
     this.tweens.add({
       targets: ann,
-      alpha: 0,
-      y: ann.y - 60,
-      duration: 1800,
-      delay: 600,
-      onComplete: () => ann.destroy(),
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 400,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: ann,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          alpha: 0,
+          duration: 900,
+          delay: 500,
+          ease: 'Sine.easeIn',
+          onComplete: () => ann.destroy(),
+        });
+      },
     });
+
+    // Spawn delay scales down each wave (3000ms → 800ms minimum)
+    const spawnDelay = Math.max(SPAWN_DELAY_MIN, SPAWN_DELAY_BASE - (this.wave - 1) * SPAWN_DELAY_STEP);
 
     // 10-second Orders Phase before enemies spawn
     this._runOrdersPhase(() => {
       // Spawn enemies with a stagger after the orders phase
       for (let i = 0; i < waveSize; i++) {
-        this.time.delayedCall(i * 1500 + 800, () => {
+        this.time.delayedCall(i * spawnDelay + 800, () => {
           if (!this.gameOver) this._spawnEnemy();
         });
       }
@@ -585,17 +629,16 @@ export default class BattleScene extends Phaser.Scene {
     this._enemiesLeftInWave = Math.max(0, this._enemiesLeftInWave - 1);
     this._enemiesKilledInWave = (this._enemiesKilledInWave || 0) + 1;
 
-    const reward = Calculator.goldReward(this.wave);
-    this.gold += reward;
+    this.gold += ENEMY_BOUNTY;
     this.events.emit('goldChanged', this.gold);
 
     // Screen shake
     this.cameras.main.shake(80, 0.006);
 
-    // Floating gold text
+    // Floating bounty text (green, 1-second fade)
     const ex = enemy.sprite ? enemy.sprite.x : 400;
     const ey = enemy.sprite ? enemy.sprite.y : 300;
-    this._floatingText(ex, ey, `+${reward} ₴`);
+    this._floatingBountyText(ex, ey, `+${ENEMY_BOUNTY} ₴`);
   }
 
   // ─── Tower Placement ─────────────────────────────────────────────────────────

@@ -9,7 +9,7 @@ export default class Calculator {
    * @returns {number}
    */
   static enemyHP(wave) {
-    return Math.floor(100 * Math.pow(1.18, wave - 1));
+    return Math.floor(100 * Math.pow(1.2, wave - 1));
   }
 
   /**
