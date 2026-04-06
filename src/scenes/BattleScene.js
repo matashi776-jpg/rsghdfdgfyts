@@ -1,22 +1,21 @@
 /**
  * BattleScene.js
- * Dynamic battle engine — Оборона Ланчина V3.0
+ * Dynamic battle engine — Оборона Ланчина V4.0 NEON PSYCHEDELIC
  *
- * State machine:
- *  init()   → reset all per-run state
- *  create() → build physics world, start wave 1, launch UIScene overlay
- *  update() → defender shooting, wall-damage, HP bars, wave-timer bar
- *
- * Wave flow: 60 s per wave → _endWave() → PerkScene on waves 5 & 10.
- * Wave 10 is the boss wave; it ends when the boss is killed.
- * PerkScene calls resumeFromPerk() then resumes this scene.
+ * Changes from V3:
+ *  - Wave duration: 80 s (was 60 s)
+ *  - Enemy scaling: +30% HP and +10% speed per wave
+ *  - Boss appearance: bgm.setRate(1.2)
+ *  - Neon projectile trails (pink/orange additive particles)
+ *  - House tiers with gameplay bonuses
+ *  - Neon visual style throughout
  */
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
   }
 
-  // ─── Init (called fresh every time the scene starts) ─────────────────────
+  // ─── Init ─────────────────────────────────────────────────────────────────
 
   init() {
     this.wave          = 1;
@@ -27,11 +26,11 @@ export default class BattleScene extends Phaser.Scene {
     this.bossActive    = false;
     this.waveActive    = false;
     this._waveElapsed  = 0;
-    this._waveDuration = 60000;
+    this._waveDuration = 80000; // 80 seconds per wave
     this.modifiers     = {
       damage:        1,
       passiveIncome: 1,
-      attackSpeed:   1,   // lower = faster firing
+      attackSpeed:   1,
       wallDefense:   1,
     };
     this.houseMaxHP = 2000;
@@ -43,12 +42,24 @@ export default class BattleScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // Background
-    this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height);
+    // Neon-tinted background
+    this.add.image(width / 2, height / 2, 'bg')
+      .setDisplaySize(width, height)
+      .setTint(0x8800ff);
+
+    // Scanline overlay for cyber feel
+    const scanlines = this.add.graphics().setAlpha(0.07).setDepth(1);
+    for (let y = 0; y < height; y += 4) {
+      scanlines.lineStyle(1, 0x00ffff, 1);
+      scanlines.moveTo(0, y);
+      scanlines.lineTo(width, y);
+    }
+    scanlines.strokePath();
 
     // ── The Wall (House) ────────────────────────────────────────────────────
     this.house = this.physics.add.staticImage(150, 360, 'house_1');
     this.house.setDisplaySize(100, 200);
+    this.house.setTint(0xff88ff);
     this.house.refreshBody();
 
     // ── Physics groups ──────────────────────────────────────────────────────
@@ -60,7 +71,6 @@ export default class BattleScene extends Phaser.Scene {
     this._createDefenders();
 
     // ── Colliders ───────────────────────────────────────────────────────────
-    // Enemy reaches wall → stop and attack
     this.physics.add.overlap(
       this.enemiesGroup,
       this.house,
@@ -68,7 +78,6 @@ export default class BattleScene extends Phaser.Scene {
       null,
       this,
     );
-    // Projectile hits enemy
     this.physics.add.overlap(
       this.projectilesGroup,
       this.enemiesGroup,
@@ -77,36 +86,46 @@ export default class BattleScene extends Phaser.Scene {
       this,
     );
 
-    // ── HUD graphics (drawn each frame inside update) ───────────────────────
+    // ── HUD graphics ────────────────────────────────────────────────────────
     this._hpGfx        = this.add.graphics().setDepth(10);
     this._timerGfx     = this.add.graphics().setDepth(10);
     this._bossBarGfx   = this.add.graphics().setDepth(10);
     this._waveLabelTxt = this.add.text(width / 2, 8, '', {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '22px',
-      color:      '#ffff00',
+      color:      '#ff00ff',
+      stroke:     '#000000',
+      strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 14, fill: true },
     }).setOrigin(0.5, 0).setDepth(10);
 
-    // Boss HP label (hidden until boss wave)
-    this._bossTitleTxt = this.add.text(width / 2, 10, 'БОС: ТОВАРИШ ВАХТЕРША', {
+    // Boss HP label
+    this._bossTitleTxt = this.add.text(width / 2, 10, 'КІБЕР-БОС: ТОВАРИШ ВАХТЕРША', {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '16px',
-      color:      '#ff88ff',
+      color:      '#ff00ff',
+      stroke:     '#000000',
+      strokeThickness: 4,
+      shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 14, fill: true },
     }).setOrigin(0.5, 0).setDepth(11).setVisible(false);
 
     // House HP label
     this._houseHpLabel = this.add.text(82, 676, '', {
       fontFamily: 'Arial, sans-serif',
       fontSize:   '13px',
-      color:      '#ffffff',
+      color:      '#00ffff',
+      shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 8, fill: true },
     }).setDepth(10);
 
     // Game-over text
     this._gameOverTxt = this.add.text(width / 2, height / 2, 'ХУТІР ВПАВ!', {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '72px',
-      color:      '#ff2200',
-    }).setOrigin(0.5).setStroke('#000000', 12).setVisible(false).setDepth(40);
+      color:      '#ff00ff',
+      stroke:     '#000000',
+      strokeThickness: 12,
+      shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 40, fill: true },
+    }).setOrigin(0.5).setVisible(false).setDepth(40);
 
     // ── Economy: passive income ──────────────────────────────────────────────
     this._passiveTimer = this.time.addEvent({
@@ -118,6 +137,16 @@ export default class BattleScene extends Phaser.Scene {
           this.money += Math.floor(10 * this.modifiers.passiveIncome);
         }
       },
+    });
+
+    // ── Neon pulse on house (breathing glow) ─────────────────────────────────
+    this.tweens.add({
+      targets: this.house,
+      alpha: 0.8,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
     });
 
     // ── Start first wave ────────────────────────────────────────────────────
@@ -133,16 +162,37 @@ export default class BattleScene extends Phaser.Scene {
     if (this.houseLevel >= 3) return;
     this.houseLevel++;
     this.house.setTexture('house_' + this.houseLevel);
+
     if (this.houseLevel === 2) {
       this.houseMaxHP = 5000;
+      this.house.setTint(0x00ffff); // Brick house — cyan neon
     } else if (this.houseLevel === 3) {
       this.houseMaxHP = 12000;
+      this.house.setTint(0xff00aa); // Cyber-Fortress — neon pink
+      // Lvl 3 bonus: unlock Auto-Turret (faster fire)
+      this.modifiers.attackSpeed = Math.max(0.1, this.modifiers.attackSpeed - 0.35);
+      this._spawnUpgradeParticles();
     }
-    this.houseHP = this.houseMaxHP; // heal to full
+    this.houseHP = this.houseMaxHP;
+
     const newW = 100 + (this.houseLevel - 1) * 10;
     const newH = 200 + (this.houseLevel - 1) * 20;
     this.house.setDisplaySize(newW, newH);
     this.house.refreshBody();
+  }
+
+  _spawnUpgradeParticles() {
+    const em = this.add.particles(this.house.x, this.house.y, 'particle_neon_cyan', {
+      speed:    { min: 60, max: 300 },
+      scale:    { start: 1.6, end: 0 },
+      alpha:    { start: 1, end: 0 },
+      lifespan: { min: 400, max: 900 },
+      angle:    { min: 0, max: 360 },
+      tint:     [0x00ffff, 0xff00aa, 0xffff00],
+      emitting: false,
+    }).setDepth(15);
+    em.explode(40, this.house.x, this.house.y);
+    this.time.delayedCall(1000, () => { if (em.active) em.destroy(); });
   }
 
   // ─── Defenders ────────────────────────────────────────────────────────────
@@ -158,6 +208,7 @@ export default class BattleScene extends Phaser.Scene {
     for (const pos of positions) {
       const s = this.add.image(pos.x, pos.y, 'sergiy')
         .setDisplaySize(48, 72)
+        .setTint(0xff88ff)
         .setDepth(5);
       s.fireTimer = 0;
       this.defendersGroup.add(s);
@@ -172,10 +223,9 @@ export default class BattleScene extends Phaser.Scene {
     this._waveLabelTxt.setText(`Хвиля: ${this.wave}`);
 
     if (this.wave === 10) {
-      // Boss wave — no 60 s timer; ends when boss is killed
       this._spawnBoss();
-      this._spawnTimer    = null;
-      this._waveEndTimer  = null;
+      this._spawnTimer   = null;
+      this._waveEndTimer = null;
     } else {
       const interval = Math.max(500, 2000 - this.wave * 100);
       this._spawnTimer = this.time.addEvent({
@@ -184,7 +234,7 @@ export default class BattleScene extends Phaser.Scene {
         callbackScope: this,
         callback: this._spawnEnemy,
       });
-      this._spawnEnemy(); // immediate first enemy
+      this._spawnEnemy();
 
       this._waveEndTimer = this.time.delayedCall(
         this._waveDuration,
@@ -201,7 +251,6 @@ export default class BattleScene extends Phaser.Scene {
     if (this._waveEndTimer) { this._waveEndTimer.remove(); this._waveEndTimer = null; }
 
     if (this.wave === 5 || this.wave === 10) {
-      // Roguelike perk selection — pause battle and overlay PerkScene
       this.scene.pause();
       this.scene.launch('PerkScene', { modifiers: this.modifiers, wave: this.wave });
     } else {
@@ -210,7 +259,6 @@ export default class BattleScene extends Phaser.Scene {
     }
   }
 
-  /** Called by PerkScene after the player has picked a perk. */
   resumeFromPerk() {
     this.wave++;
     this._startWave();
@@ -222,26 +270,29 @@ export default class BattleScene extends Phaser.Scene {
     if (this.gameOver) return;
     const { height } = this.scale;
     const roll = Math.random();
-    let type, speed, hpMult, dispW, dispH;
+    let type, baseSpeed, hpMult, dispW, dispH, tint;
 
     if (roll < 0.5) {
-      // enemy_clerk — medium HP, slow
-      type = 'enemy_clerk'; speed = 60;  hpMult = 1.0; dispW = 48; dispH = 64;
+      type = 'enemy_clerk'; baseSpeed = 60; hpMult = 1.0; dispW = 48; dispH = 64; tint = 0xaa44ff;
     } else if (roll < 0.80) {
-      // enemy_runner — less HP, fast
-      type = 'enemy_runner'; speed = 120; hpMult = 0.7; dispW = 40; dispH = 56;
+      type = 'enemy_runner'; baseSpeed = 120; hpMult = 0.7; dispW = 40; dispH = 56; tint = 0xff6600;
     } else {
-      // enemy_tank — 3× HP, very slow
-      type = 'enemy_tank'; speed = 30; hpMult = 3.0; dispW = 80; dispH = 80;
+      type = 'enemy_tank'; baseSpeed = 30; hpMult = 3.0; dispW = 80; dispH = 80; tint = 0x00ff44;
     }
+
+    // +10% speed per wave (wave starts at 1)
+    const speed = baseSpeed * (1 + (this.wave - 1) * 0.10);
 
     const y     = Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
     const enemy = this.enemiesGroup.create(1340, y, type);
     enemy.setDisplaySize(dispW, dispH);
+    enemy.setTint(tint);
     enemy.body.setVelocityX(-speed);
-    enemy.maxHp          = Math.round(this.baseEnemyHP * (1 + this.wave * 0.35) * hpMult);
-    enemy.hp             = enemy.maxHp;
-    enemy.isBoss         = false;
+
+    // +30% HP per wave
+    enemy.maxHp           = Math.round(this.baseEnemyHP * (1 + (this.wave - 1) * 0.30) * hpMult);
+    enemy.hp              = enemy.maxHp;
+    enemy.isBoss          = false;
     enemy.isAttackingWall = false;
     enemy.setDepth(4);
   }
@@ -250,6 +301,7 @@ export default class BattleScene extends Phaser.Scene {
     const { height } = this.scale;
     const boss = this.enemiesGroup.create(1200, height / 2, 'boss_vakhtersha');
     boss.setDisplaySize(120, 140);
+    boss.setTint(0xff00ff);
     boss.body.setVelocityX(-15);
     boss.maxHp           = 15000;
     boss.hp              = 15000;
@@ -258,6 +310,18 @@ export default class BattleScene extends Phaser.Scene {
     boss.setDepth(6);
     this.bossActive = true;
     this._bossTitleTxt.setVisible(true);
+
+    // Boss arrival: speed up BGM
+    const bgm = this.sound.get('bgm');
+    if (bgm) bgm.setRate(1.2);
+
+    // Flash screen neon pink
+    const flash = this.add.rectangle(
+      this.scale.width / 2, this.scale.height / 2,
+      this.scale.width, this.scale.height,
+      0xff00aa, 0,
+    ).setDepth(50);
+    this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
   }
 
   // ─── Combat ───────────────────────────────────────────────────────────────
@@ -296,43 +360,41 @@ export default class BattleScene extends Phaser.Scene {
       this.bossActive = false;
       this._bossTitleTxt.setVisible(false);
       this._bossBarGfx.clear();
+      // Reset BGM rate
+      const bgm = this.sound.get('bgm');
+      if (bgm) bgm.setRate(1.0);
       this._endWave();
     }
   }
 
-  // ─── VFX — Particle Manager ───────────────────────────────────────────────
+  // ─── VFX — Neon Particle Manager ─────────────────────────────────────────
 
-  /** Blood / virus burst on enemy death (red squares fading out). */
   _spawnDeathExplosion(x, y) {
-    const emitter = this.add.particles(x, y, 'particle_red', {
-      speed:    { min: 40,  max: 200  },
-      scale:    { start: 1.4, end: 0  },
-      alpha:    { start: 1,   end: 0  },
-      lifespan: { min: 280, max: 620  },
-      angle:    { min: 0,   max: 360  },
-      tint:     [0xff2200, 0xaa1100, 0xff6600],
+    const emitter = this.add.particles(x, y, 'particle_neon_pink', {
+      speed:    { min: 60, max: 260 },
+      scale:    { start: 1.6, end: 0 },
+      alpha:    { start: 1, end: 0 },
+      lifespan: { min: 300, max: 700 },
+      angle:    { min: 0, max: 360 },
+      tint:     [0xff00aa, 0xff6600, 0xffff00, 0x00ffff],
       emitting: false,
-    });
-    emitter.explode(24, x, y);
-    this.time.delayedCall(700, () => {
-      if (emitter.active) emitter.destroy();
-    });
+    }).setDepth(15);
+    emitter.explode(30, x, y);
+    this.time.delayedCall(800, () => { if (emitter.active) emitter.destroy(); });
   }
 
-  /** Small spark on projectile impact. */
   _spawnHitParticle(x, y) {
-    const emitter = this.add.particles(x, y, 'particle_yellow', {
-      speed:    { min: 20, max: 90 },
-      scale:    { start: 0.7, end: 0 },
-      alpha:    { start: 1,   end: 0 },
-      lifespan: 240,
+    const emitter = this.add.particles(x, y, 'particle_neon_orange', {
+      speed:    { min: 30, max: 110 },
+      scale:    { start: 0.9, end: 0 },
+      alpha:    { start: 1, end: 0 },
+      lifespan: 280,
       angle:    { min: 0, max: 360 },
+      tint:     [0xff6600, 0xffff00],
       emitting: false,
-    });
-    emitter.explode(7, x, y);
-    this.time.delayedCall(350, () => {
-      if (emitter.active) emitter.destroy();
-    });
+    }).setDepth(15);
+    emitter.explode(10, x, y);
+    this.time.delayedCall(400, () => { if (emitter.active) emitter.destroy(); });
   }
 
   // ─── Defender Shooting ────────────────────────────────────────────────────
@@ -341,7 +403,6 @@ export default class BattleScene extends Phaser.Scene {
     const enemies = this.enemiesGroup.getChildren().filter((e) => e.active);
     if (enemies.length === 0) return;
 
-    // Target nearest enemy
     let target = null;
     let minDist = Infinity;
     for (const e of enemies) {
@@ -350,30 +411,31 @@ export default class BattleScene extends Phaser.Scene {
       const d  = dx * dx + dy * dy;
       if (d < minDist) { minDist = d; target = e; }
     }
-    if (!target || minDist > 700 * 700) return; // 700 px range
+    if (!target || minDist > 700 * 700) return;
 
-    const proj = this.projectilesGroup.create(defender.x + 22, defender.y, 'particle_yellow');
+    const proj = this.projectilesGroup.create(defender.x + 22, defender.y, 'particle_neon_pink');
     if (!proj) return;
-    proj.setDisplaySize(14, 8);
+    proj.setDisplaySize(16, 10);
     proj.setDepth(6);
+    proj.setTint(0xff00aa);
 
     const angle = Math.atan2(target.y - defender.y, target.x - defender.x);
-    const spd   = 420;
+    const spd   = 460;
     proj.body.setVelocity(Math.cos(angle) * spd, Math.sin(angle) * spd);
 
-    // Particle trail following the projectile
-    const trail = this.add.particles(proj.x, proj.y, 'particle_yellow', {
-      speed:     { min: 5, max: 30 },
-      scale:     { start: 0.5, end: 0 },
-      alpha:     { start: 0.7, end: 0 },
-      lifespan:  180,
-      frequency: 30,
-      quantity:  1,
-    });
+    // Neon pink/orange additive particle trail
+    const trail = this.add.particles(proj.x, proj.y, 'particle_neon_orange', {
+      speed:     { min: 8, max: 40 },
+      scale:     { start: 0.7, end: 0 },
+      alpha:     { start: 0.9, end: 0 },
+      lifespan:  200,
+      frequency: 20,
+      quantity:  2,
+      tint:      [0xff00aa, 0xff6600],
+    }).setDepth(5);
     trail.startFollow(proj);
     proj.particleTrail = trail;
 
-    // Safety: destroy projectile (and trail) after 2 s if nothing was hit
     this.time.delayedCall(2000, () => {
       if (proj.active) {
         if (proj.particleTrail && proj.particleTrail.active) {
@@ -393,9 +455,7 @@ export default class BattleScene extends Phaser.Scene {
     if (this.gameOver) return;
     const { width } = this.scale;
 
-    // ── Defender fire timers ──────────────────────────────────────────────
-    // Base cooldown 1200 ms; attackSpeed modifier acts as a multiplier on that interval.
-    // "Козацький Драйв" subtracts 0.3 each pick, making the multiplier smaller → faster.
+    // Defender fire timers
     const cooldown = Math.max(300, 1200 * this.modifiers.attackSpeed);
     for (const def of this.defendersGroup.getChildren()) {
       def.fireTimer = (def.fireTimer || 0) + delta;
@@ -405,7 +465,7 @@ export default class BattleScene extends Phaser.Scene {
       }
     }
 
-    // ── Wall damage from attacking enemies ────────────────────────────────
+    // Wall damage
     const defenseInv = delta / (Math.max(0.1, this.modifiers.wallDefense) * 1000);
     for (const enemy of this.enemiesGroup.getChildren()) {
       if (!enemy.active || !enemy.isAttackingWall) continue;
@@ -413,30 +473,32 @@ export default class BattleScene extends Phaser.Scene {
       this.houseHP -= dps * defenseInv;
     }
 
-    // ── Wave timer bar ────────────────────────────────────────────────────
+    // Wave timer bar (neon style)
     if (this.waveActive && this.wave !== 10) {
       this._waveElapsed += delta;
       const ratio = Math.min(1, this._waveElapsed / this._waveDuration);
       this._timerGfx.clear();
-      this._timerGfx.fillStyle(0x333333, 0.55);
-      this._timerGfx.fillRect(width / 2 - 220, 38, 440, 9);
-      this._timerGfx.fillStyle(0xffaa00, 1);
-      this._timerGfx.fillRect(width / 2 - 220, 38, 440 * (1 - ratio), 9);
+      this._timerGfx.fillStyle(0x110022, 0.7);
+      this._timerGfx.fillRect(width / 2 - 220, 38, 440, 10);
+      this._timerGfx.fillStyle(0xff00ff, 1);
+      this._timerGfx.fillRect(width / 2 - 220, 38, 440 * (1 - ratio), 10);
+      this._timerGfx.lineStyle(1, 0xff00ff, 0.6);
+      this._timerGfx.strokeRect(width / 2 - 220, 38, 440, 10);
     } else if (this.wave === 10) {
       this._timerGfx.clear();
     }
 
-    // ── Draw HUD ──────────────────────────────────────────────────────────
+    // HUD
     this._drawHouseHpBar();
     this._drawEnemyHpBars();
     if (this.bossActive) this._drawBossHpBar();
 
-    // ── Out-of-bounds cleanup ─────────────────────────────────────────────
+    // Out-of-bounds cleanup
     for (const enemy of this.enemiesGroup.getChildren()) {
       if (enemy.active && enemy.x < -120) enemy.destroy();
     }
 
-    // ── Game-over check ───────────────────────────────────────────────────
+    // Game-over check
     if (this.houseHP <= 0 && !this.gameOver) {
       this.houseHP  = 0;
       this.gameOver = true;
@@ -449,32 +511,28 @@ export default class BattleScene extends Phaser.Scene {
   _drawHouseHpBar() {
     const ratio = Math.max(0, this.houseHP / this.houseMaxHP);
     this._hpGfx.clear();
-    // Background
-    this._hpGfx.fillStyle(0x550000, 1);
+    this._hpGfx.fillStyle(0x110022, 1);
     this._hpGfx.fillRect(80, 680, 180, 22);
-    // Fill — green → yellow → red based on ratio
-    const fillColor = ratio > 0.5 ? 0x00cc44 : ratio > 0.25 ? 0xffaa00 : 0xff2200;
+    const fillColor = ratio > 0.5 ? 0x00ffaa : ratio > 0.25 ? 0xffaa00 : 0xff00aa;
     this._hpGfx.fillStyle(fillColor, 1);
     this._hpGfx.fillRect(80, 680, 180 * ratio, 22);
-    // Border
-    this._hpGfx.lineStyle(2, 0xffffff, 0.9);
+    this._hpGfx.lineStyle(2, 0x00ffff, 0.9);
     this._hpGfx.strokeRect(80, 680, 180, 22);
-    // HP numbers
-    const hp  = Math.max(0, Math.ceil(this.houseHP));
+    const hp = Math.max(0, Math.ceil(this.houseHP));
     this._houseHpLabel.setText(`Хутір: ${hp} / ${this.houseMaxHP}`);
   }
 
   _drawEnemyHpBars() {
     for (const enemy of this.enemiesGroup.getChildren()) {
       if (!enemy.active) continue;
-      const r   = Math.max(0, enemy.hp / enemy.maxHp);
-      const bw  = enemy.isBoss ? 0 : 42; // boss bar drawn separately
+      const r  = Math.max(0, enemy.hp / enemy.maxHp);
+      const bw = enemy.isBoss ? 0 : 42;
       if (bw === 0) continue;
-      const bx  = enemy.x - bw / 2;
-      const by  = enemy.y - enemy.displayHeight / 2 - 9;
-      this._hpGfx.fillStyle(0x440000, 1);
+      const bx = enemy.x - bw / 2;
+      const by = enemy.y - enemy.displayHeight / 2 - 9;
+      this._hpGfx.fillStyle(0x330022, 1);
       this._hpGfx.fillRect(bx, by, bw, 5);
-      this._hpGfx.fillStyle(0x00cc44, 1);
+      this._hpGfx.fillStyle(0x00ffaa, 1);
       this._hpGfx.fillRect(bx, by, bw * r, 5);
     }
   }
@@ -486,13 +544,15 @@ export default class BattleScene extends Phaser.Scene {
     const ratio = Math.max(0, boss.hp / boss.maxHp);
     const barX  = 200;
     const barW  = width - 400;
+    // Pulsing pink boss bar
+    const pulse = 0.7 + 0.3 * Math.sin(this.time.now / 200);
     this._bossBarGfx.clear();
-    this._bossBarGfx.fillStyle(0x220022, 0.88);
-    this._bossBarGfx.fillRoundedRect(barX, 4, barW, 32, 6);
-    this._bossBarGfx.fillStyle(0xcc00cc, 1);
-    this._bossBarGfx.fillRoundedRect(barX, 4, barW * ratio, 32, 6);
-    this._bossBarGfx.lineStyle(2, 0xffffff, 0.85);
-    this._bossBarGfx.strokeRoundedRect(barX, 4, barW, 32, 6);
+    this._bossBarGfx.fillStyle(0x220033, 0.9);
+    this._bossBarGfx.fillRoundedRect(barX, 4, barW, 34, 7);
+    this._bossBarGfx.fillStyle(0xff00aa, pulse);
+    this._bossBarGfx.fillRoundedRect(barX, 4, barW * ratio, 34, 7);
+    this._bossBarGfx.lineStyle(2, 0xff00ff, 0.9);
+    this._bossBarGfx.strokeRoundedRect(barX, 4, barW, 34, 7);
   }
 
   // ─── Game Over ────────────────────────────────────────────────────────────
@@ -502,8 +562,12 @@ export default class BattleScene extends Phaser.Scene {
     if (this._waveEndTimer) this._waveEndTimer.remove();
     this._passiveTimer.remove();
 
+    // Reset BGM rate
+    const bgm = this.sound.get('bgm');
+    if (bgm) bgm.setRate(1.0);
+
     this._gameOverTxt.setVisible(true);
-    this.cameras.main.shake(900, 0.025);
+    this.cameras.main.shake(900, 0.03);
 
     this.time.delayedCall(4200, () => {
       this.scene.stop('UIScene');
