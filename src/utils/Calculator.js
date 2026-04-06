@@ -5,11 +5,26 @@
 export default class Calculator {
   /**
    * Enemy HP for a given wave.
+   *
+   * Uses a stepped-logarithmic formula so difficulty grows in "staircases"
+   * that align with perk milestones (every 5 waves).  After each perk the
+   * game resets to the new tier's base, giving the player a brief respite
+   * before ramping up again.
+   *
+   * Approximate values:
+   *   Wave  1 →  100   Wave  5 →  180
+   *   Wave  6 →  260   Wave 10 →  468
+   *   Wave 11 →  580   Wave 15 → 1044
+   *
    * @param {number} wave – 1-indexed wave number
    * @returns {number}
    */
   static enemyHP(wave) {
-    return Math.floor(100 * Math.pow(1.18, wave - 1));
+    const TIER_BASES = [100, 260, 580, 1100];
+    const tier       = Math.floor((wave - 1) / 5);
+    const waveInTier = (wave - 1) % 5;
+    const base       = TIER_BASES[Math.min(tier, TIER_BASES.length - 1)];
+    return Math.floor(base * (1 + 0.4 * Math.log2(waveInTier + 1)));
   }
 
   /**

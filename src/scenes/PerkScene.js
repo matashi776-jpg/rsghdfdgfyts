@@ -14,12 +14,12 @@
 const ALL_PERKS = [
   {
     name:      'Золотий Талон',
-    desc:      '💰 Пасивний прибуток ×2\n(Нео-монети течуть самі!)',
+    desc:      '💰 Пасивний прибуток ×2\n🔗 Синергія: ×2 золото з отруєних ворогів\n(Нео-монети течуть самі!)',
     color:     0x2a1a00,
     accent:    0xffcc00,
     textColor: '#ffdd44',
     glowColor: '#ffcc00',
-    effect: (mod) => { mod.passiveIncome *= 2; },
+    effect: (mod) => { mod.passiveIncome *= 2; mod.goldenTalon = true; },
   },
   {
     name:      'Техно-Печатка',

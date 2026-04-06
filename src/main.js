@@ -18,6 +18,9 @@ const config = {
     arcade: {
       gravity: { y: 0 },
       debug: false,
+      // Higher physics FPS reduces the chance of fast projectiles tunneling
+      // through thin enemies between frames (effectively halves the step size).
+      fps: 120,
     },
   },
   scale: {
