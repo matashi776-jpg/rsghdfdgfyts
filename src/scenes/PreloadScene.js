@@ -1,6 +1,7 @@
 /**
  * PreloadScene.js
- * Loads all assets for Оборона Ланчина V3.0; generates fallback textures on error.
+ * Loads all assets for Оборона Ланчина V4.0 — NEON PSYCHEDELIC EDITION.
+ * Generates neon fallback textures on asset error.
  */
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -10,14 +11,22 @@ export default class PreloadScene extends Phaser.Scene {
   preload() {
     const { width, height } = this.scale;
 
-    // Loading bar
-    this.add.rectangle(width / 2, height / 2 + 50, 500, 28, 0x333333);
-    const bar = this.add.rectangle(width / 2 - 250, height / 2 + 50, 0, 28, 0x22cc66);
+    // Neon loading background
+    this.add.rectangle(width / 2, height / 2, width, height, 0x050010);
+
+    // Loading bar — neon style
+    this.add.rectangle(width / 2, height / 2 + 50, 504, 32, 0x220044);
+    this.add.rectangle(width / 2, height / 2 + 50, 500, 28, 0x110022);
+    const bar = this.add.rectangle(width / 2 - 250, height / 2 + 50, 0, 28, 0xff00ff);
     bar.setOrigin(0, 0.5);
-    this.add.text(width / 2, height / 2, 'Завантаження...', {
+
+    this.add.text(width / 2, height / 2 - 10, 'ЗАВАНТАЖЕННЯ...', {
       fontFamily: 'Arial Black, Arial',
       fontSize: '32px',
-      color: '#ffffff',
+      color: '#00ffff',
+      stroke: '#ff00ff',
+      strokeThickness: 4,
+      shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 20, fill: true },
     }).setOrigin(0.5);
 
     this.load.on('progress', (v) => { bar.width = 500 * v; });
@@ -51,15 +60,15 @@ export default class PreloadScene extends Phaser.Scene {
 
   _ensureFallbacks() {
     const defs = [
-      { key: 'bg',              color: 0x1a1a2e, w: 1280, h: 720  },
-      { key: 'house_1',         color: 0x8b4513, w: 100,  h: 200  },
-      { key: 'house_2',         color: 0xa0522d, w: 110,  h: 220  },
-      { key: 'house_3',         color: 0xcd853f, w: 120,  h: 240  },
-      { key: 'sergiy',          color: 0xff8800, w: 64,   h: 96   },
-      { key: 'enemy_clerk',     color: 0x888888, w: 48,   h: 64   },
-      { key: 'enemy_runner',    color: 0xcc6600, w: 40,   h: 56   },
-      { key: 'enemy_tank',      color: 0x334455, w: 80,   h: 80   },
-      { key: 'boss_vakhtersha', color: 0x660066, w: 120,  h: 140  },
+      { key: 'bg',              color: 0x0a0020, w: 1280, h: 720  },
+      { key: 'house_1',         color: 0x1a0040, w: 100,  h: 200  },
+      { key: 'house_2',         color: 0x002244, w: 110,  h: 220  },
+      { key: 'house_3',         color: 0x001a33, w: 120,  h: 240  },
+      { key: 'sergiy',          color: 0xff00ff, w: 64,   h: 96   },
+      { key: 'enemy_clerk',     color: 0x444466, w: 48,   h: 64   },
+      { key: 'enemy_runner',    color: 0x664400, w: 40,   h: 56   },
+      { key: 'enemy_tank',      color: 0x223355, w: 80,   h: 80   },
+      { key: 'boss_vakhtersha', color: 0x440066, w: 120,  h: 140  },
     ];
 
     for (const fb of defs) {
@@ -68,22 +77,44 @@ export default class PreloadScene extends Phaser.Scene {
         !this.textures.exists(fb.key) ||
         this.textures.get(fb.key).key === '__MISSING'
       ) {
-        this._makeRect(fb.key, fb.color, fb.w, fb.h);
+        this._makeNeonRect(fb.key, fb.color, fb.w, fb.h);
       }
     }
   }
 
   _makeParticleTextures() {
-    this._makeRect('particle_red',    0xff2200, 8, 8);
-    this._makeRect('particle_yellow', 0xffcc00, 6, 6);
+    // Neon particle textures — glowing circles
+    this._makeGlowCircle('particle_neon_pink',   0xff00aa, 8);
+    this._makeGlowCircle('particle_neon_orange',  0xff6600, 7);
+    this._makeGlowCircle('particle_neon_cyan',    0x00ffff, 6);
+    this._makeGlowCircle('particle_neon_green',   0x00ff88, 6);
+    // Legacy keys — now neon
+    this._makeGlowCircle('particle_red',    0xff0044, 8);
+    this._makeGlowCircle('particle_yellow', 0xffff00, 6);
   }
 
-  _makeRect(key, color, w, h) {
+  _makeGlowCircle(key, color, r) {
+    const size = r * 4;
+    const gfx = this.make.graphics({ x: 0, y: 0, add: false });
+    // Outer glow
+    gfx.fillStyle(color, 0.25);
+    gfx.fillCircle(size / 2, size / 2, r * 1.8);
+    // Mid glow
+    gfx.fillStyle(color, 0.6);
+    gfx.fillCircle(size / 2, size / 2, r * 1.2);
+    // Core
+    gfx.fillStyle(0xffffff, 0.9);
+    gfx.fillCircle(size / 2, size / 2, r * 0.6);
+    gfx.generateTexture(key, size, size);
+    gfx.destroy();
+  }
+
+  _makeNeonRect(key, color, w, h) {
     const gfx = this.make.graphics({ x: 0, y: 0, add: false });
     gfx.fillStyle(color, 1);
     gfx.fillRect(0, 0, w, h);
     gfx.generateTexture(key, w, h);
     gfx.destroy();
-    console.info(`Generated fallback texture: ${key}`);
+    console.info(`Generated neon fallback texture: ${key}`);
   }
 }
