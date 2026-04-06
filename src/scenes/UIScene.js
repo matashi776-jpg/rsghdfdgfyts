@@ -8,7 +8,7 @@
 const GOOSE_COST = 50;
 const OINTMENT_COST = 100;
 const OINTMENT_COOLDOWN = 30000; // 30 s
-const LANE_Y = [150, 300, 450];
+const LANE_Y = [350, 450, 550];
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -153,10 +153,11 @@ export default class UIScene extends Phaser.Scene {
   // ─── Top Bar ─────────────────────────────────────────────────────────────────
 
   _buildTopBar(width) {
-    this.add.rectangle(width / 2, 22, width, 44, 0x1a237e, 0.82).setDepth(40);
+    // Tall top bar occupying the sky area (rows for stats + unit buttons)
+    this.add.rectangle(width / 2, 50, width, 100, 0x1a237e, 0.82).setDepth(40);
 
     this._goldText = this.add
-      .text(16, 22, '₴ 0', {
+      .text(16, 18, '₴ 0', {
         fontSize: '18px',
         fontFamily: 'Arial',
         fontStyle: 'bold',
@@ -168,7 +169,7 @@ export default class UIScene extends Phaser.Scene {
       .setDepth(41);
 
     this._waveText = this.add
-      .text(width / 2, 22, 'Wave 1', {
+      .text(width / 2, 18, 'Wave 1', {
         fontSize: '18px',
         fontFamily: 'Arial',
         fontStyle: 'bold',
@@ -182,26 +183,16 @@ export default class UIScene extends Phaser.Scene {
 
   // ─── Bottom Bar ──────────────────────────────────────────────────────────────
 
-  _buildBottomBar(width, height) {
-    this.add
-      .rectangle(width / 2, height - 38, width, 76, 0x263238, 0.88)
-      .setDepth(40);
-
-    // Label
-    this.add
-      .text(12, height - 60, 'Inventory', {
-        fontSize: '11px',
-        fontFamily: 'Arial',
-        color: '#b0bec5',
-      })
-      .setDepth(41);
+  _buildBottomBar(_width, _height) {
+    // Bottom bar removed – all controls are in the top sky area.
   }
 
   // ─── Draggable Goose Icon ────────────────────────────────────────────────────
 
-  _buildDragIcon(width, height) {
+  _buildDragIcon(width, _height) {
+    // Place goose slot in the second row of the top bar
     const iconX = 60;
-    const iconY = height - 38;
+    const iconY = 58;
 
     // Background slot
     this.add
@@ -329,9 +320,9 @@ export default class UIScene extends Phaser.Scene {
 
   // ─── Ointment Button ─────────────────────────────────────────────────────────
 
-  _buildOintmentButton(width, height) {
-    const btnX = width - 90;
-    const btnY = height - 38;
+  _buildOintmentButton(width, _height) {
+    const btnX = width - 80;
+    const btnY = 58;
 
     this._ointmentBg = this.add
       .rectangle(btnX, btnY, 120, 60, 0x2e7d32, 0.95)
