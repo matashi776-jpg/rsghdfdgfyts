@@ -642,7 +642,7 @@ export default class BattleScene extends Phaser.Scene {
     const defenseInv = delta / (Math.max(0.1, this.modifiers.wallDefense) * 1000);
     for (const enemy of this.enemiesGroup.getChildren()) {
       if (!enemy.active || !enemy.isAttackingWall) continue;
-      const dps = enemy.isBoss ? 1.5 : 0.5;
+      const dps = enemy.isBoss ? 2.0 : 0.5;
       this.houseHP -= dps * defenseInv;
     }
 
