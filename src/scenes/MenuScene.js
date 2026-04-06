@@ -33,7 +33,7 @@ export default class MenuScene extends Phaser.Scene {
       .setShadow(4, 4, '#ff0000', 0, true, true);
 
     // Start button
-    const btn = this.add.text(width / 2, height * 0.58, 'НАЧАТЬ КАМПАНИЮ', {
+    const btn = this.add.text(width / 2, height * 0.58, 'РОЗПОЧАТИ КАМПАНІЮ', {
       fontFamily: 'Arial Black, Arial',
       fontSize: '32px',
       color: '#ffee00',
