@@ -32,18 +32,20 @@ export default class MenuScene extends Phaser.Scene {
       .setStroke('#000000', 8)
       .setShadow(4, 4, '#ff0000', 0, true, true);
 
-    // Start button
-    const btn = this.add.text(width / 2, height * 0.58, 'РОЗПОЧАТИ КАМПАНІЮ', {
+    // Start button — "СТАРТ" with Neon Pink glow border (UI guide 8.6.3)
+    const btn = this.add.text(width / 2, height * 0.58, 'СТАРТ', {
       fontFamily: 'Arial Black, Arial',
-      fontSize: '32px',
-      color: '#ffee00',
+      fontSize: '40px',
+      color: '#ff00aa',
+      stroke: '#000000',
+      strokeThickness: 6,
+      shadow: { offsetX: 0, offsetY: 0, color: '#ff00aa', blur: 22, fill: true },
     })
       .setOrigin(0.5)
-      .setStroke('#000000', 6)
       .setInteractive({ useHandCursor: true });
 
     btn.on('pointerover', () => btn.setColor('#ffffff'));
-    btn.on('pointerout',  () => btn.setColor('#ffee00'));
+    btn.on('pointerout',  () => btn.setColor('#ff00aa'));
     btn.on('pointerdown', () => {
       this.cameras.main.fadeOut(1000);
     });

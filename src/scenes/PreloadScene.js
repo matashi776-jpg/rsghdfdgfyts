@@ -43,10 +43,13 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('house_2',         'house_2.png');
     this.load.image('house_3',         'house_3.png');
     this.load.image('sergiy',          'sergiy.png');
-    this.load.image('enemy_clerk',     'enemy_clerk.png');
-    this.load.image('enemy_runner',    'enemy_runner.png');
-    this.load.image('enemy_tank',      'enemy_tank.png');
-    this.load.image('boss_vakhtersha', 'boss_vakhtersha.png');
+    // Level-1 enemy sprites (named per design spec)
+    this.load.image('enemy_clerk',      'enemy_clerk.png');
+    this.load.image('enemy_archivarius','enemy_archivarius.png');
+    this.load.image('enemy_inspector',  'enemy_inspector.png');
+    this.load.image('boss_vakhtersha',  'boss_vakhtersha.png');
+    // NPC
+    this.load.image('npc_babtsya',      'assets/sprites/ui/npc_babtsya_healer_idle.png');
 
     // Audio
     this.load.audio('bgm', 'bgm.mp3');
@@ -60,15 +63,16 @@ export default class PreloadScene extends Phaser.Scene {
 
   _ensureFallbacks() {
     const defs = [
-      { key: 'bg',              color: 0x0a0020, w: 1280, h: 720  },
-      { key: 'house_1',         color: 0x1a0040, w: 100,  h: 200  },
-      { key: 'house_2',         color: 0x002244, w: 110,  h: 220  },
-      { key: 'house_3',         color: 0x001a33, w: 120,  h: 240  },
-      { key: 'sergiy',          color: 0xff00ff, w: 64,   h: 96   },
-      { key: 'enemy_clerk',     color: 0x444466, w: 48,   h: 64   },
-      { key: 'enemy_runner',    color: 0x664400, w: 40,   h: 56   },
-      { key: 'enemy_tank',      color: 0x223355, w: 80,   h: 80   },
-      { key: 'boss_vakhtersha', color: 0x440066, w: 120,  h: 140  },
+      { key: 'bg',                color: 0x0a0020, w: 1280, h: 720  },
+      { key: 'house_1',           color: 0x1a0040, w: 100,  h: 200  },
+      { key: 'house_2',           color: 0x002244, w: 110,  h: 220  },
+      { key: 'house_3',           color: 0x001a33, w: 120,  h: 240  },
+      { key: 'sergiy',            color: 0xff00ff, w: 64,   h: 96   },
+      { key: 'enemy_clerk',       color: 0x444466, w: 48,   h: 64   },
+      { key: 'enemy_archivarius', color: 0x226644, w: 56,   h: 72   },
+      { key: 'enemy_inspector',   color: 0x223355, w: 80,   h: 80   },
+      { key: 'boss_vakhtersha',   color: 0x440066, w: 120,  h: 140  },
+      { key: 'npc_babtsya',       color: 0xcc44ff, w: 48,   h: 72   },
     ];
 
     for (const fb of defs) {
@@ -84,10 +88,13 @@ export default class PreloadScene extends Phaser.Scene {
 
   _makeParticleTextures() {
     // Neon particle textures — glowing circles
-    this._makeGlowCircle('particle_neon_pink',   0xff00aa, 8);
-    this._makeGlowCircle('particle_neon_orange',  0xff6600, 7);
-    this._makeGlowCircle('particle_neon_cyan',    0x00ffff, 6);
-    this._makeGlowCircle('particle_neon_green',   0x00ff88, 6);
+    this._makeGlowCircle('particle_neon_pink',      0xff00aa, 8);
+    this._makeGlowCircle('particle_neon_orange',    0xff6600, 7);
+    this._makeGlowCircle('particle_neon_cyan',      0x00ffff, 6);
+    this._makeGlowCircle('particle_neon_green',     0x00ff88, 6);
+    this._makeGlowCircle('particle_electric_blue',  0x0088ff, 7);
+    this._makeGlowCircle('particle_toxic_green',    0x00ff44, 7);
+    this._makeGlowCircle('particle_ultra_violet',   0x8800ff, 7);
     // Legacy keys — now neon
     this._makeGlowCircle('particle_red',    0xff0044, 8);
     this._makeGlowCircle('particle_yellow', 0xffff00, 6);

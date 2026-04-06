@@ -1,9 +1,11 @@
 /**
  * UIScene.js
- * HUD overlay — Оборона Ланчина V4.0 NEON PSYCHEDELIC
- * Displays: "Рівень: [X] | Неон: [₴] | Час: [Y] сек", upgrade button,
- * and boss bar "КІБЕР-БОС: ТОВАРИШ ВАХТЕРША". All text is glowing neon.
+ * HUD overlay — Оборона Ланчина V5.0 ACID KHUTIR
+ * UI Guide (8.6.3): Toxic Green HP bar, Electric Blue wave counter,
+ * Neon Pink boss label, Ultra-Violet upgrade button.
  */
+import L from '../utils/Localization.js';
+
 export default class UIScene extends Phaser.Scene {
   constructor() {
     super({ key: 'UIScene' });
@@ -11,44 +13,45 @@ export default class UIScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    this._lang = 'ua';
 
-    // ── Top neon status line ─────────────────────────────────────────────────
+    // ── Top neon status line — Electric Blue (8.6.3) ─────────────────────────
     this._statusTxt = this.add.text(width / 2, 10, '', {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '20px',
-      color:      '#00ffff',
+      color:      '#0088ff',
       stroke:     '#000033',
       strokeThickness: 5,
-      shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 16, fill: true },
+      shadow: { offsetX: 0, offsetY: 0, color: '#0088ff', blur: 16, fill: true },
     }).setOrigin(0.5, 0).setDepth(20);
 
-    // ── Boss bar label (shown during wave 10) ────────────────────────────────
+    // ── Boss bar label (shown during boss wave) ───────────────────────────────
     this._bossLabelTxt = this.add.text(width / 2, 42, '', {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '15px',
-      color:      '#ff00ff',
+      color:      '#ff00aa',
       stroke:     '#000000',
       strokeThickness: 4,
-      shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 14, fill: true },
+      shadow: { offsetX: 0, offsetY: 0, color: '#ff00aa', blur: 14, fill: true },
     }).setOrigin(0.5, 0).setDepth(21).setVisible(false);
 
-    // ── House upgrade button ─────────────────────────────────────────────────
+    // ── House upgrade button — Ultra-Violet glow (8.6.3) ─────────────────────
     this._upgradeBtn = this.add.text(80, 648, '', {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '15px',
-      color:      '#00ffff',
+      color:      '#8800ff',
       backgroundColor: '#110022',
       padding: { x: 10, y: 5 },
       stroke:     '#000000',
       strokeThickness: 3,
-      shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 12, fill: true },
+      shadow: { offsetX: 0, offsetY: 0, color: '#8800ff', blur: 12, fill: true },
     }).setOrigin(0, 0).setDepth(20).setInteractive({ useHandCursor: true });
 
     this._upgradeBtn.on('pointerover', () => {
-      if (!this._isBattlePaused()) this._upgradeBtn.setColor('#ff00ff');
+      if (!this._isBattlePaused()) this._upgradeBtn.setColor('#ff00aa');
     });
     this._upgradeBtn.on('pointerout', () => {
-      this._upgradeBtn.setColor('#00ffff');
+      this._upgradeBtn.setColor('#8800ff');
     });
     this._upgradeBtn.on('pointerdown', () => {
       if (this._isBattlePaused()) return;
@@ -61,7 +64,6 @@ export default class UIScene extends Phaser.Scene {
       }
     });
 
-    // Track elapsed seconds for the timer display
     this._elapsedSec = 0;
   }
 
@@ -82,24 +84,17 @@ export default class UIScene extends Phaser.Scene {
   update(time, delta) {
     const battle = this.scene.get('BattleScene');
     if (!battle || battle.gameOver) return;
+    const lang = battle._lang ?? 'ua';
 
-    // Accumulate wave time in seconds
-    if (battle.waveActive && battle.wave !== 10) {
-      this._elapsedSec += delta / 1000;
-    } else if (!battle.waveActive) {
-      this._elapsedSec = 0;
-    }
+    // Wave counter — Electric Blue (8.6.3)
+    const waveLabel = battle.wave <= 3
+      ? `${L[lang].wave}: ${battle.wave}  |  ₴${battle.money}`
+      : `${L[lang].bossName}  |  ₴${battle.money}`;
+    this._statusTxt.setText(waveLabel);
 
-    const secLeft = Math.max(0, Math.ceil(80 - this._elapsedSec));
-
-    // Top status line: "Рівень: X | Неон: ₴ | Час: Y сек"
-    this._statusTxt.setText(
-      `Рівень: ${battle.wave}  |  Неон: ₴${battle.money}  |  Час: ${secLeft} сек`,
-    );
-
-    // Boss bar label (wave 10)
-    if (battle.wave === 10 && battle.bossActive) {
-      this._bossLabelTxt.setVisible(true).setText('КІБЕР-БОС: ТОВАРИШ ВАХТЕРША');
+    // Boss bar label
+    if (battle.bossActive) {
+      this._bossLabelTxt.setVisible(true).setText(L[lang].bossName);
     } else {
       this._bossLabelTxt.setVisible(false);
     }
@@ -109,12 +104,12 @@ export default class UIScene extends Phaser.Scene {
     const cost = this._upgradeCost(lvl);
     const tierNames = ['', 'Затишна Хата', 'Цегляний Дім', 'КІБЕР-ФОРТЕЦЯ'];
     if (lvl >= 3) {
-      this._upgradeBtn.setText(`🏰 ${tierNames[3]} — МАКСИМУМ`).setColor('#ff00ff');
+      this._upgradeBtn.setText(`🏰 ${tierNames[3]} — МАКСИМУМ`).setColor('#ff00aa');
     } else {
       const canAfford = battle.money >= cost;
       this._upgradeBtn
         .setText(`⬆ Покращити: ${tierNames[lvl + 1]} (${cost} ₴)`)
-        .setColor(canAfford ? '#00ffff' : '#ff4466');
+        .setColor(canAfford ? '#8800ff' : '#ff4466');
     }
   }
 }

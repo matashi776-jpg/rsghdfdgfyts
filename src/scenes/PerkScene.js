@@ -1,33 +1,33 @@
 /**
  * PerkScene.js
- * Neon Psychedelic perk-selection overlay — Оборона Ланчина V4.0
+ * Neon Psychedelic perk-selection overlay — Оборона Ланчина V5.0 ACID KHUTIR
  *
- * Shows 3 stylized neon cards every 5 waves.
+ * Shows 3 stylized neon cards after wave 3 (before boss wave).
+ * UI guide (8.6.3): Perk cards — neon rectangles, Glow: Ultra-Violet.
+ *
  * Perks (as specified):
  *   - Золотий Талон    — passive money generation ×2
  *   - Техно-Печатка    — house takes 30% less damage
  *   - Кислотний Буряк  — bullet damage ×1.5 + acid splash (extra AOE damage)
- *
- * All text is glowing neon (Cyan / Magenta).
  */
 
 const ALL_PERKS = [
   {
     name:      'Золотий Талон',
     desc:      '💰 Пасивний прибуток ×2\n(Нео-монети течуть самі!)',
-    color:     0x2a1a00,
-    accent:    0xffcc00,
-    textColor: '#ffdd44',
-    glowColor: '#ffcc00',
+    color:     0x1a0030,
+    accent:    0x8800ff,   // Ultra-Violet
+    textColor: '#cc44ff',
+    glowColor: '#8800ff',
     effect: (mod) => { mod.passiveIncome *= 2; },
   },
   {
     name:      'Техно-Печатка',
     desc:      '🛡 Хутір отримує на 30% менше шкоди\n(Нано-щит активовано!)',
     color:     0x001a33,
-    accent:    0x00ffff,
-    textColor: '#00ffff',
-    glowColor: '#00ffff',
+    accent:    0x8800ff,   // Ultra-Violet
+    textColor: '#cc44ff',
+    glowColor: '#8800ff',
     // House takes 30% less damage: wallDefense acts as divisor in damage formula,
     // so multiplying by 1/0.7 ≈ 1.43 reduces incoming damage to 70% of original.
     effect: (mod) => { mod.wallDefense *= (1 / 0.7); },
@@ -36,9 +36,9 @@ const ALL_PERKS = [
     name:      'Кислотний Буряк',
     desc:      '⚗ Шкода кулі ×1.5\n+ Кислотний сплеск (AOE)',
     color:     0x1a0022,
-    accent:    0xff00aa,
-    textColor: '#ff44ff',
-    glowColor: '#ff00aa',
+    accent:    0x8800ff,   // Ultra-Violet
+    textColor: '#cc44ff',
+    glowColor: '#8800ff',
     effect: (mod) => {
       mod.damage *= 1.5;
       mod.acidSplash = (mod.acidSplash || 0) + 1;
@@ -48,9 +48,9 @@ const ALL_PERKS = [
     name:      'Козацький Драйв',
     desc:      '⚡ Швидкість атаки +30%\n(Сергій в кайфі!)',
     color:     0x001122,
-    accent:    0x4488ff,
-    textColor: '#88aaff',
-    glowColor: '#4488ff',
+    accent:    0x8800ff,   // Ultra-Violet
+    textColor: '#cc44ff',
+    glowColor: '#8800ff',
     effect: (mod) => { mod.attackSpeed = Math.max(0.1, mod.attackSpeed - 0.3); },
   },
 ];
