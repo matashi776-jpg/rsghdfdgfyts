@@ -55,6 +55,7 @@ export default class PreloadScene extends Phaser.Scene {
   create() {
     this._ensureFallbacks();
     this._makeParticleTextures();
+    this._makeBossAttackTextures();
     this.scene.start('MenuScene');
   }
 
@@ -116,5 +117,32 @@ export default class PreloadScene extends Phaser.Scene {
     gfx.generateTexture(key, w, h);
     gfx.destroy();
     console.info(`Generated neon fallback texture: ${key}`);
+  }
+
+  /** Procedural textures for boss attack projectiles. */
+  _makeBossAttackTextures() {
+    // boss_stamp — red rectangle with a border (looks like an ink stamp)
+    if (!this.textures.exists('boss_stamp')) {
+      const g = this.make.graphics({ x: 0, y: 0, add: false });
+      g.fillStyle(0xcc0000, 1);
+      g.fillRect(0, 0, 34, 34);
+      g.lineStyle(3, 0xff4444, 1);
+      g.strokeRect(3, 3, 28, 28);
+      g.fillStyle(0xff6666, 1);
+      g.fillRect(8, 8, 18, 18);
+      g.generateTexture('boss_stamp', 34, 34);
+      g.destroy();
+    }
+
+    // boss_varenyk — yellow-white crescent shape (dumpling silhouette)
+    if (!this.textures.exists('boss_varenyk')) {
+      const g = this.make.graphics({ x: 0, y: 0, add: false });
+      g.fillStyle(0xffee44, 1);
+      g.fillEllipse(15, 13, 30, 22);
+      g.fillStyle(0xffffff, 0.5);
+      g.fillEllipse(11, 10, 14, 10);
+      g.generateTexture('boss_varenyk', 30, 26);
+      g.destroy();
+    }
   }
 }

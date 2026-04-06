@@ -9,7 +9,11 @@
  *  - Neon projectile trails (pink/orange additive particles)
  *  - House tiers with gameplay bonuses
  *  - Neon visual style throughout
+ *  - Part 5: Full boss system — BossEntity, BossManager, BossAttacks, BossTelegraphs
  */
+import BossEntity  from '../classes/BossEntity.js';
+import BossManager from '../classes/BossManager.js';
+import BossAttacks from '../classes/BossAttacks.js';
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -23,6 +27,9 @@ export default class BattleScene extends Phaser.Scene {
     this.baseEnemyHP   = 100;
     this.money         = 50;
     this.gameOver      = false;
+    this.bossEntity  = null;
+    this.bossManager = null;
+    this.bossAttacks = null;
     this.bossActive    = false;
     this.waveActive    = false;
     this._waveElapsed  = 0;
@@ -63,8 +70,9 @@ export default class BattleScene extends Phaser.Scene {
     this.house.refreshBody();
 
     // ── Physics groups ──────────────────────────────────────────────────────
-    this.enemiesGroup     = this.physics.add.group();
-    this.projectilesGroup = this.physics.add.group();
+    this.enemiesGroup          = this.physics.add.group();
+    this.projectilesGroup      = this.physics.add.group();
+    this.bossProjectilesGroup  = this.physics.add.group();
 
     // ── Defenders (Sergiy) ──────────────────────────────────────────────────
     this.defendersGroup = this.add.group();
@@ -85,6 +93,18 @@ export default class BattleScene extends Phaser.Scene {
       null,
       this,
     );
+
+    // Boss projectiles can damage the house directly
+    this.physics.add.overlap(
+      this.bossProjectilesGroup,
+      this.house,
+      (proj) => this._bossProjHitHouse(proj),
+      null,
+      this,
+    );
+
+    // Listen for boss death event emitted by BossEntity.die()
+    this.events.on('bossDefeated', this._onBossDefeated, this);
 
     // ── HUD graphics ────────────────────────────────────────────────────────
     this._hpGfx        = this.add.graphics().setDepth(10);
@@ -266,7 +286,7 @@ export default class BattleScene extends Phaser.Scene {
 
   // ─── Enemy Spawning ───────────────────────────────────────────────────────
 
-  _spawnEnemy() {
+  _spawnEnemy(overrideX, overrideY) {
     if (this.gameOver) return;
     const { height } = this.scale;
     const roll = Math.random();
@@ -283,8 +303,12 @@ export default class BattleScene extends Phaser.Scene {
     // +10% speed per wave (wave starts at 1)
     const speed = baseSpeed * (1 + (this.wave - 1) * 0.10);
 
-    const y     = Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
-    const enemy = this.enemiesGroup.create(1340, y, type);
+    const spawnX = (overrideX !== undefined && overrideX !== null) ? overrideX : 1340;
+    const y      = (overrideY !== undefined && overrideY !== null)
+      ? overrideY
+      : Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
+
+    const enemy = this.enemiesGroup.create(spawnX, y, type);
     enemy.setDisplaySize(dispW, dispH);
     enemy.setTint(tint);
     enemy.body.setVelocityX(-speed);
@@ -298,30 +322,30 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _spawnBoss() {
-    const { height } = this.scale;
-    const boss = this.enemiesGroup.create(1200, height / 2, 'boss_vakhtersha');
-    boss.setDisplaySize(120, 140);
-    boss.setTint(0xff00ff);
-    boss.body.setVelocityX(-15);
-    boss.maxHp           = 15000;
-    boss.hp              = 15000;
-    boss.isBoss          = true;
-    boss.isAttackingWall = false;
-    boss.setDepth(6);
+    // ── Create the full boss system ────────────────────────────────────────
+    this.bossAttacks = new BossAttacks(this);
+    this.bossEntity  = new BossEntity(this, 1200, this.scale.height / 2);
+    this.bossManager = new BossManager(this, this.bossEntity, this.bossAttacks);
+
+    // Add boss sprite to enemiesGroup so defenders target it and the
+    // existing house-overlap callback (_enemyReachWall) keeps working.
+    this.enemiesGroup.add(this.bossEntity.sprite);
+
     this.bossActive = true;
     this._bossTitleTxt.setVisible(true);
 
-    // Boss arrival: speed up BGM
+    // Speed up BGM
     const bgm = this.sound.get('bgm');
     if (bgm) bgm.setRate(1.2);
 
-    // Flash screen neon pink
+    // Flash screen neon pink on arrival
     const flash = this.add.rectangle(
       this.scale.width / 2, this.scale.height / 2,
       this.scale.width, this.scale.height,
       0xff00aa, 0,
     ).setDepth(50);
-    this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
+    this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2,
+      onComplete: () => flash.destroy() });
   }
 
   // ─── Combat ───────────────────────────────────────────────────────────────
@@ -335,7 +359,6 @@ export default class BattleScene extends Phaser.Scene {
   _hitEnemy(proj, enemy) {
     if (!proj.active || !enemy.active) return;
     const damage = Math.floor(20 * this.modifiers.damage);
-    enemy.hp -= damage;
     this._spawnHitParticle(proj.x, proj.y);
     if (proj.particleTrail) {
       proj.particleTrail.stopFollow();
@@ -345,6 +368,13 @@ export default class BattleScene extends Phaser.Scene {
     }
     proj.destroy();
 
+    // Delegate damage to BossEntity when hit registered on the boss sprite
+    if (enemy.bossRef) {
+      enemy.bossRef.takeDamage(damage);
+      return;
+    }
+
+    enemy.hp -= damage;
     if (enemy.hp <= 0) {
       this._killEnemy(enemy);
     }
@@ -353,18 +383,48 @@ export default class BattleScene extends Phaser.Scene {
   _killEnemy(enemy) {
     this.money += 20;
     this._spawnDeathExplosion(enemy.x, enemy.y);
-    const wasBoss = enemy.isBoss;
+    // Boss sprites are handled by _onBossDefeated via the bossDefeated event;
+    // _killEnemy is only called for regular enemies.
     enemy.destroy();
+  }
 
-    if (wasBoss) {
-      this.bossActive = false;
-      this._bossTitleTxt.setVisible(false);
-      this._bossBarGfx.clear();
-      // Reset BGM rate
-      const bgm = this.sound.get('bgm');
-      if (bgm) bgm.setRate(1.0);
-      this._endWave();
+  _bossProjHitHouse(proj) {
+    if (!proj.active) return;
+    // Stamp shot deals fixed damage to the house
+    this.houseHP = Math.max(0, this.houseHP - 60);
+    this._spawnHitParticle(proj.x, proj.y);
+    if (proj._trail && proj._trail.active) {
+      proj._trail.stopFollow();
+      proj._trail.destroy();
     }
+    proj.destroy();
+  }
+
+  /** Called when BossEntity.die() emits the 'bossDefeated' event. */
+  _onBossDefeated() {
+    if (this.bossEntity) {
+      this._spawnDeathExplosion(
+        this.bossEntity.sprite ? this.bossEntity.sprite.x : this.scale.width / 2,
+        this.bossEntity.sprite ? this.bossEntity.sprite.y : this.scale.height / 2,
+      );
+    }
+
+    this.money += 500; // Big gold reward
+
+    this.bossActive = false;
+    this._bossTitleTxt.setVisible(false);
+    this._bossBarGfx.clear();
+
+    // Cleanup boss system objects
+    if (this.bossAttacks) { this.bossAttacks.destroy(); this.bossAttacks = null; }
+    this.bossManager = null;
+    this.bossEntity  = null;
+
+    // Reset BGM rate
+    const bgm = this.sound.get('bgm');
+    if (bgm) bgm.setRate(1.0);
+
+    this._endWave();
   }
 
   // ─── VFX — Neon Particle Manager ─────────────────────────────────────────
@@ -455,11 +515,17 @@ export default class BattleScene extends Phaser.Scene {
     if (this.gameOver) return;
     const { width } = this.scale;
 
-    // Defender fire timers
+    // ── Boss system tick ──────────────────────────────────────────────────
+    if (this.bossEntity)  this.bossEntity.update();
+    if (this.bossManager) this.bossManager.update(time, delta);
+
+    // Defender fire timers (sticky zones from varenyk slow fire rate by 40%)
     const cooldown = Math.max(300, 1200 * this.modifiers.attackSpeed);
     for (const def of this.defendersGroup.getChildren()) {
+      const stuck       = this.bossAttacks && this.bossAttacks.isDefenderStuck(def.x);
+      const effectiveCd = stuck ? cooldown * 1.4 : cooldown;
       def.fireTimer = (def.fireTimer || 0) + delta;
-      if (def.fireTimer >= cooldown) {
+      if (def.fireTimer >= effectiveCd) {
         def.fireTimer = 0;
         this._defenderShoot(def);
       }
@@ -493,9 +559,9 @@ export default class BattleScene extends Phaser.Scene {
     this._drawEnemyHpBars();
     if (this.bossActive) this._drawBossHpBar();
 
-    // Out-of-bounds cleanup
+    // Out-of-bounds cleanup (skip boss sprite — it has world bounds collision)
     for (const enemy of this.enemiesGroup.getChildren()) {
-      if (enemy.active && enemy.x < -120) enemy.destroy();
+      if (enemy.active && enemy.x < -120 && !enemy.bossRef) enemy.destroy();
     }
 
     // Game-over check
@@ -538,10 +604,13 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _drawBossHpBar() {
-    const boss = this.enemiesGroup.getChildren().find((e) => e.active && e.isBoss);
-    if (!boss) return;
+    // Prefer the managed BossEntity for accurate HP (sprite.hp is kept in sync)
+    const bossHP    = this.bossEntity ? this.bossEntity.hp    : null;
+    const bossMaxHP = this.bossEntity ? this.bossEntity.maxHP : null;
+    if (bossHP === null || !bossMaxHP) return;
+
     const { width } = this.scale;
-    const ratio = Math.max(0, boss.hp / boss.maxHp);
+    const ratio = Math.max(0, bossHP / bossMaxHP);
     const barX  = 200;
     const barW  = width - 400;
     // Pulsing pink boss bar
