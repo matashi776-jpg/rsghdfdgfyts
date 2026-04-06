@@ -410,7 +410,7 @@ hotfix/*      ← термінові фікси (hotfix/boss-hp-bug)
 
 ```
 You are acting as a Senior Developer, Senior Game Designer, Senior Art Director,
-and Senior VFX Director for the game ACID KHUTIR (also known as Лanchyn vs Savok /
+and Senior VFX Director for the game ACID KHUTIR (also known as Lanchyn vs Savok /
 Оборона Ланчина).
 
 ACID KHUTIR is a Neon Psychedelic Cyber-Folk 2D defense game built in Phaser 3
@@ -578,7 +578,7 @@ rsghdfdgfyts/                        ← GitHub repo root
 
 ---
 
-## 📜 ЛЕЙAУТ ЛОР
+## 📜 ЛЕЙАУТ ЛОР
 
 ### Сеттинг: Ланчин 2049
 Маленьке Ukrainian село, захоплене інформаційним вірусом **Mausoleum 2.1** — автоматизованою системою архівації реальності, що перетворює людей на бюрократичних зомбі. Вілейдж оточений неоновим полем, яке захищає від зовнішнього світу, але всередині хаос.
