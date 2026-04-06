@@ -210,8 +210,6 @@ export default class BattleScene extends Phaser.Scene {
     // Upgrade burst FX
     if (this.fx) {
       this.fx.spawnUpgradeBurst(this.house.x, this.house.y);
-    } else {
-      this._spawnUpgradeParticles();
     }
   }
 
@@ -315,8 +313,6 @@ export default class BattleScene extends Phaser.Scene {
     this.wave++;
     this._startWave();
   }
-
-  // ─── Enemy Spawning ───────────────────────────────────────────────────────
 
   // ─── Enemy Spawning (Enemy Bible types) ──────────────────────────────────
 

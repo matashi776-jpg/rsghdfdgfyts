@@ -46,7 +46,9 @@ export default class Enemy {
    * @param {number} y
    * @param {number} hp
    * @param {number} speed   – pixels per second
-   * @param {string} tier    – see ENEMY_DEFS keys
+   * @param {string} tier    – Enemy type. One of: 'zombie_clerk' | 'archivarius' |
+   *                           'inspector' | 'tank_babtsia' | 'boss' | 'bureaucrat' |
+   *                           'intern' | 'clerk' | 'department_head' | 'enemy_tank'
    */
   constructor(scene, x, y, hp, speed, tier) {
     this.scene = scene;
