@@ -18,6 +18,7 @@ export default class ComicScene extends Phaser.Scene {
 
   init(data) {
     this._panel      = data.panel || 'comic_panel_01';
+    this._captionKey = data.captionKey || 'comic_caption';
     this._onComplete = data.onComplete || null;
     this._dismissed  = false;
   }
@@ -62,8 +63,8 @@ export default class ComicScene extends Phaser.Scene {
     bubble.lineStyle(3, 0xff00ff, 1);
     bubble.strokeRoundedRect(bx - bw / 2, by - bh / 2, bw, bh, 14);
 
-    // Speech text
-    this.add.text(bx, by, Locale.t('npc_babtsya'), {
+    // Speech text — uses dynamic caption key
+    this.add.text(bx, by, Locale.t(this._captionKey), {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '17px',
       color:      '#220044',

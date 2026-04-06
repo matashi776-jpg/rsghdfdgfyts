@@ -67,8 +67,7 @@ const STRINGS = {
     npc_babtsya:    'Та йди сюди, я тебе вичухаю, як кота на Спаса!',
     npc_mykhas:     'Та я то всьо на коліні скручу!',
 
-    // ── Cutscene captions ─────────────────────────────────────────────────────
-    cutscene_intro:       'Ланчин, 2026. Сергій стоїть на горбі над кіберхутором…',
+    campaign_start: 'РОЗПОЧАТИ КАМПАНІЮ',
     cutscene_boss_header: '☢ КІБЕР-БОС З\'ЯВЛЯЄТЬСЯ ☢',
 
     // ── Comic captions ────────────────────────────────────────────────────────
@@ -136,8 +135,7 @@ const STRINGS = {
     npc_babtsya:    'Come here, I\'ll fix you up like a cat on a holy day.',
     npc_mykhas:     'I can fix it with duct tape and trauma.',
 
-    // ── Cutscene captions ─────────────────────────────────────────────────────
-    cutscene_intro:       'Lanchyn, 2026. Serhiy stands on a hill above the cyber-hut…',
+    campaign_start: 'START CAMPAIGN',
     cutscene_boss_header: '☢ CYBER-BOSS ARRIVES ☢',
 
     // ── Comic captions ────────────────────────────────────────────────────────
@@ -173,7 +171,11 @@ const Locale = {
    */
   t(key, ...args) {
     const src = STRINGS[_lang] || STRINGS.ua;
-    let str = src[key] ?? STRINGS.ua[key] ?? key;
+    let str = src[key] ?? STRINGS.ua[key];
+    if (str === undefined) {
+      console.warn(`[Locale] Missing key: "${key}" in lang "${_lang}"`);
+      str = key;
+    }
     for (const v of args) {
       str = str.replace('%d', String(v));
     }

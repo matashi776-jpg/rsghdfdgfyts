@@ -34,8 +34,8 @@ export default class MenuScene extends Phaser.Scene {
       .setStroke('#000000', 8)
       .setShadow(4, 4, '#ff0000', 0, true, true);
 
-    // Start button — uses Locale
-    const btn = this.add.text(width / 2, height * 0.58, Locale.t('start') + ' — РОЗПОЧАТИ КАМПАНІЮ', {
+    // Start button — fully localized
+    const btn = this.add.text(width / 2, height * 0.58, `${Locale.t('start')} — ${Locale.t('campaign_start')}`, {
       fontFamily: 'Arial Black, Arial',
       fontSize: '32px',
       color: '#ffee00',

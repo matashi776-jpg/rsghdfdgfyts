@@ -303,20 +303,16 @@ export default class BattleScene extends Phaser.Scene {
     if (this._spawnTimer)   { this._spawnTimer.remove();   this._spawnTimer   = null; }
     if (this._waveEndTimer) { this._waveEndTimer.remove(); this._waveEndTimer = null; }
 
-    // After wave 1 — show comic panel interlude
+    // After wave 1 — show comic panel interlude, then advance to wave 2
     if (this.wave === 1) {
       this.scene.pause('BattleScene');
       this.scene.launch('ComicScene', {
-        panel: 'comic_panel_01',
+        panel:      'comic_panel_01',
+        captionKey: 'comic_caption',
         onComplete: () => {
           this.scene.resume('BattleScene');
-          if (this.wave === 5 || this.wave === 10) {
-            this.scene.pause();
-            this.scene.launch('PerkScene', { modifiers: this.modifiers, wave: this.wave });
-          } else {
-            this.wave++;
-            this._startWave();
-          }
+          this.wave++;
+          this._startWave();
         },
       });
       return;
