@@ -20,7 +20,7 @@ const GRID_COL_W = (GRID_RIGHT - GRID_LEFT) / GRID_COLS; // 100 px per column
 const GRID_TOP = 120;
 const GRID_BOTTOM = 480;
 
-// PvZ balance: all bureaucrats crawl at 0.5 px/frame (≈ 30 px/s at 60 fps)
+const PROJECTILE_SPEED = 400;
 const BUREAUCRAT_SPEED = 30;
 const ORDERS_PHASE_DURATION = 10; // seconds
 
@@ -276,8 +276,34 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Physics ──────────────────────────────────────────────────────────────────
 
   _setupPhysics() {
-    // Overlap between projectiles and enemies is handled in update()
-    // to avoid destroy-in-callback issues.
+    this.projectiles = this._borshchPool;
+    this.defenders = this.physics.add.group();
+    this.enemiesGroup = this.physics.add.group();
+
+    // Projectiles destroy enemies on contact
+    this.physics.add.overlap(this.projectiles, this.enemiesGroup, function(projectile, enemySprite) {
+      const enemy = enemySprite.enemyRef;
+      if (!enemy || !enemy.alive) return;
+      const vx = projectile.body ? projectile.body.velocity.x : 0;
+      const vy = projectile.body ? projectile.body.velocity.y : 0;
+      const damage = projectile._damage || 30;
+      this._emitHitExplosion(projectile.x, projectile.y, vx, vy);
+      enemy.takeDamage(damage);
+      this._recycleProjectile(projectile);
+      if (!enemy.alive) {
+        const idx = this.enemies.indexOf(enemy);
+        if (idx !== -1) this._onEnemyKilled(enemy, idx);
+      }
+    }, null, this);
+
+    // Enemies destroy defenders on contact
+    this.physics.add.overlap(this.enemiesGroup, this.defenders, function(enemySprite, defenderSprite) {
+      const tower = defenderSprite.towerRef;
+      if (!tower || !tower.alive) return;
+      const idx = this.towers.indexOf(tower);
+      tower.destroy();
+      if (idx !== -1) this.towers.splice(idx, 1);
+    }, null, this);
   }
 
   // ─── Preparation Countdown ───────────────────────────────────────────────────
@@ -497,6 +523,7 @@ export default class BattleScene extends Phaser.Scene {
     const hp = Math.floor(Calculator.enemyHP(this.wave) * hpMult);
     const enemy = new Enemy(this, SPAWN_X, lane, hp, speed, tier);
     this.enemies.push(enemy);
+    this.enemiesGroup.add(enemy.sprite);
   }
 
   // ─── Projectile Firing ───────────────────────────────────────────────────────
@@ -508,19 +535,9 @@ export default class BattleScene extends Phaser.Scene {
     proj.setActive(true).setVisible(true);
     proj.setPosition(tower.sprite.x + 20, tower.sprite.y);
     proj.body.enable = true;
+    proj.body.gravity.y = 0;
 
-    const dx = target.sprite.x - proj.x;
-    const dy = target.sprite.y - proj.y;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    const speed = 320;
-
-    // Parabolic arc: slight upward kick + body gravity creates a throw arc.
-    // arcKick offsets the initial Y velocity upward so the midpoint of the
-    // flight visibly rises before gravity pulls it back down.
-    const arcKick = -55;
-    proj.setVelocity((dx / dist) * speed, (dy / dist) * speed + arcKick);
-    // 180 px/s² gives a gentle arc without wildly overshooting targets
-    proj.body.gravity.y = 180;
+    proj.setVelocity(PROJECTILE_SPEED, 0);
 
     // Rotation tween
     this.tweens.add({
@@ -531,10 +548,6 @@ export default class BattleScene extends Phaser.Scene {
     });
 
     proj._damage = tower.damage;
-    proj._target = target;
-    proj._targetId = target.sprite ? target.sprite.x + '' + target.sprite.y : '';
-    proj._velX = (dx / dist) * speed; // store for directional splash
-    proj._velY = (dy / dist) * speed;
   }
 
   // ─── Main Update ─────────────────────────────────────────────────────────────
@@ -561,39 +574,12 @@ export default class BattleScene extends Phaser.Scene {
       }
     }
 
-    // Check projectile–enemy collisions
+    // Recycle out-of-bounds projectiles
     const activeProjs = this._borshchPool.getMatching('active', true);
     for (const proj of activeProjs) {
       if (!proj.active || !proj.body) continue;
-
-      // Out of bounds
-      if (proj.x < -20 || proj.x > 900 || proj.y < -20 || proj.y > 620) {
+      if (proj.x < -20 || proj.x > 960 || proj.y < -20 || proj.y > 640) {
         this._recycleProjectile(proj);
-        continue;
-      }
-
-      // Check against enemies
-      for (let j = this.enemies.length - 1; j >= 0; j--) {
-        const enemy = this.enemies[j];
-        if (!enemy.alive || !enemy.sprite || !enemy.sprite.active) continue;
-
-        const dx = proj.x - enemy.sprite.x;
-        const dy = proj.y - enemy.sprite.y;
-        const hitRadius = 22;
-
-        if (Math.abs(dx) < hitRadius && Math.abs(dy) < hitRadius) {
-          // Hit!
-          const vx = proj.body.velocity.x;
-          const vy = proj.body.velocity.y;
-          this._emitHitExplosion(proj.x, proj.y, vx, vy);
-          this._recycleProjectile(proj);
-          enemy.takeDamage(proj._damage || 30);
-
-          if (!enemy.alive) {
-            this._onEnemyKilled(enemy, j);
-          }
-          break;
-        }
       }
     }
 
@@ -655,6 +641,7 @@ export default class BattleScene extends Phaser.Scene {
 
     const tower = new Tower(this, x, y, laneIndex);
     this.towers.push(tower);
+    this.defenders.add(tower.sprite);
 
     // Dirt dust burst when goose hits the ground
     this._emitDustBurst(x, y + 10);

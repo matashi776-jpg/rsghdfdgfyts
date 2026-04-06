@@ -16,7 +16,7 @@ export default class Tower {
     this.lane = lane;
     this.level = 1;
     this.baseDamage = 30;
-    this.fireRate = 2000; // ms between shots
+    this.fireRate = 1500; // ms between shots
     this.range = 220;     // px
     this.alive = true;
     this._boosted = false;
@@ -68,7 +68,7 @@ export default class Tower {
       if (!enemy.alive || !enemy.sprite || !enemy.sprite.active) continue;
       // Same lane check: enemy Y close to tower Y
       if (Math.abs(enemy.sprite.y - this.sprite.y) > 60) continue;
-      const dist = this.sprite.x - enemy.sprite.x; // enemy comes from right
+      const dist = enemy.sprite.x - this.sprite.x; // positive when enemy is to the right
       if (dist > 0 && dist < this.range && dist < minDist) {
         minDist = dist;
         target = enemy;
