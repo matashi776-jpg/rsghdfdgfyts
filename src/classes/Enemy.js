@@ -111,6 +111,13 @@ export default class Enemy {
       this.die();
     } else {
       this._drawHPBar();
+      // Hit flash: briefly tint the sprite white for 0.1 s
+      if (this.sprite && this.sprite.active) {
+        this.sprite.setTint(0xffffff);
+        this.scene.time.delayedCall(100, () => {
+          if (this.sprite && this.sprite.active) this.sprite.clearTint();
+        });
+      }
     }
   }
 
@@ -135,12 +142,23 @@ export default class Enemy {
       this.hpBar = null;
     }
     if (this.sprite && this.sprite.active) {
-      this.sprite.disableBody(true, true);
-      this.scene.time.delayedCall(50, () => {
-        if (this.sprite) {
-          this.sprite.destroy();
-          this.sprite = null;
-        }
+      // Nullify this.sprite immediately so update() / _drawHPBar() (both guard on
+      // this.alive which is already false) won't access the sprite during the
+      // death animation. The local `sprite` variable owns the tween reference.
+      const sprite = this.sprite;
+      this.sprite = null;
+      sprite.setVelocity(0, 0);
+      if (sprite.body) sprite.body.enable = false;
+
+      // Fade + shrink death animation before destroying
+      this.scene.tweens.add({
+        targets: sprite,
+        alpha: 0,
+        scaleX: 0.05,
+        scaleY: 0.05,
+        duration: 350,
+        ease: 'Back.easeIn',
+        onComplete: () => sprite.destroy(),
       });
     }
   }
