@@ -9,7 +9,15 @@
  *  - Neon projectile trails (pink/orange additive particles)
  *  - House tiers with gameplay bonuses
  *  - Neon visual style throughout
+ *
+ * V4.1 additions:
+ *  - VFXManager: hit stop, screen glitch, low-HP vignette, scanlines
+ *  - AudioManager: BGM boss-mode, low-HP rate, SFX helpers
+ *  - Boss phase transitions (75 / 50 / 25 % HP) with escalating VFX
  */
+import VFXManager   from '../utils/VFXManager.js';
+import AudioManager from '../utils/AudioManager.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -27,6 +35,7 @@ export default class BattleScene extends Phaser.Scene {
     this.waveActive    = false;
     this._waveElapsed  = 0;
     this._waveDuration = 80000; // 80 seconds per wave
+    this._bossPhase    = 0;     // 0 = no boss, 1–4 = active phases
     this.modifiers     = {
       damage:        1,
       passiveIncome: 1,
@@ -42,19 +51,18 @@ export default class BattleScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    // ── VFX + Audio managers ────────────────────────────────────────────────
+    this.vfx   = new VFXManager(this);
+    this.audio = new AudioManager(this);
+    this.audio.playBGM('bgm');
+
     // Neon-tinted background
     this.add.image(width / 2, height / 2, 'bg')
       .setDisplaySize(width, height)
       .setTint(0x8800ff);
 
-    // Scanline overlay for cyber feel
-    const scanlines = this.add.graphics().setAlpha(0.07).setDepth(1);
-    for (let y = 0; y < height; y += 4) {
-      scanlines.lineStyle(1, 0x00ffff, 1);
-      scanlines.moveTo(0, y);
-      scanlines.lineTo(width, y);
-    }
-    scanlines.strokePath();
+    // Scanline overlay for cyber feel (delegated to VFXManager)
+    this.vfx.createScanlines(0.07);
 
     // ── The Wall (House) ────────────────────────────────────────────────────
     this.house = this.physics.add.staticImage(150, 360, 'house_1');
@@ -308,20 +316,15 @@ export default class BattleScene extends Phaser.Scene {
     boss.isBoss          = true;
     boss.isAttackingWall = false;
     boss.setDepth(6);
-    this.bossActive = true;
+    this.bossActive  = true;
+    this._bossPhase  = 1;
     this._bossTitleTxt.setVisible(true);
 
-    // Boss arrival: speed up BGM
-    const bgm = this.sound.get('bgm');
-    if (bgm) bgm.setRate(1.2);
-
-    // Flash screen neon pink
-    const flash = this.add.rectangle(
-      this.scale.width / 2, this.scale.height / 2,
-      this.scale.width, this.scale.height,
-      0xff00aa, 0,
-    ).setDepth(50);
-    this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
+    // Boss arrival: speed up BGM + VFX fanfare
+    this.audio.setBossMode(true);
+    this.vfx.shake(400, 0.025);
+    this.vfx.screenGlitch(600);
+    this.vfx.flash(0xff00aa, 0.5, 300);
   }
 
   // ─── Combat ───────────────────────────────────────────────────────────────
@@ -345,9 +348,37 @@ export default class BattleScene extends Phaser.Scene {
     }
     proj.destroy();
 
+    // Boss hit — camera shake + hit stop + phase check
+    if (enemy.isBoss) {
+      this.vfx.shake(120, 0.01);
+      this.vfx.hitStop(100);
+      this._checkBossPhase(enemy);
+    }
+
     if (enemy.hp <= 0) {
       this._killEnemy(enemy);
     }
+  }
+
+  // ─── Boss Phase Transitions ───────────────────────────────────────────────
+  // Triggered on every boss hit. Escalating VFX at 75 / 50 / 25 % HP.
+
+  _checkBossPhase(boss) {
+    const ratio    = boss.hp / boss.maxHp;
+    let   newPhase = 1;
+    if      (ratio <= 0.25) newPhase = 4;
+    else if (ratio <= 0.50) newPhase = 3;
+    else if (ratio <= 0.75) newPhase = 2;
+
+    if (newPhase <= this._bossPhase) return;
+    this._bossPhase = newPhase;
+
+    const glitchDur = 400 + newPhase * 100;
+    const shakeDur  = 200 + newPhase * 60;
+    const shakeInt  = 0.01 + newPhase * 0.005;
+    this.vfx.screenGlitch(glitchDur);
+    this.vfx.shake(shakeDur, shakeInt);
+    this.vfx.flash(0xff00aa, 0.3 + newPhase * 0.05, 300);
   }
 
   _killEnemy(enemy) {
@@ -357,13 +388,19 @@ export default class BattleScene extends Phaser.Scene {
     enemy.destroy();
 
     if (wasBoss) {
-      this.bossActive = false;
+      this.bossActive  = false;
+      this._bossPhase  = 0;
       this._bossTitleTxt.setVisible(false);
       this._bossBarGfx.clear();
-      // Reset BGM rate
-      const bgm = this.sound.get('bgm');
-      if (bgm) bgm.setRate(1.0);
+      // Restore BGM + victory VFX
+      this.audio.setBossMode(false);
+      this.vfx.shake(400, 0.03);
+      this.vfx.screenGlitch(600);
+      this.vfx.flash(0xffff00, 0.5, 400);
       this._endWave();
+    } else {
+      // Light shake on regular enemy death
+      this.vfx.shake(80, 0.008);
     }
   }
 
@@ -504,6 +541,16 @@ export default class BattleScene extends Phaser.Scene {
       this.gameOver = true;
       this._triggerGameOver();
     }
+
+    // Low-HP vignette (triggers below 25 %)
+    if (this.vfx) {
+      this.vfx.setLowHPMode(
+        !this.gameOver && this.houseHP / this.houseMaxHP < 0.25,
+      );
+      this.audio.setLowHP(
+        !this.gameOver && this.houseHP / this.houseMaxHP < 0.25,
+      );
+    }
   }
 
   // ─── HUD Drawing ──────────────────────────────────────────────────────────
@@ -562,12 +609,13 @@ export default class BattleScene extends Phaser.Scene {
     if (this._waveEndTimer) this._waveEndTimer.remove();
     this._passiveTimer.remove();
 
-    // Reset BGM rate
-    const bgm = this.sound.get('bgm');
-    if (bgm) bgm.setRate(1.0);
+    this.audio.setBossMode(false);
+    this.vfx.setLowHPMode(false);
 
     this._gameOverTxt.setVisible(true);
-    this.cameras.main.shake(900, 0.03);
+    this.vfx.shake(900, 0.03);
+    this.vfx.screenGlitch(2000);
+    this.vfx.flash(0xff0000, 0.4, 500);
 
     this.time.delayedCall(4200, () => {
       this.scene.stop('UIScene');
