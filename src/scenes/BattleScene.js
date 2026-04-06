@@ -12,6 +12,18 @@ const HERO_X = 60;
 const HERO_Y = 300;
 const DEATH_X = 100;
 
+// Grid system (Heroes 5 tactics)
+const GRID_LEFT = 80;
+const GRID_RIGHT = 880;
+const GRID_COLS = 8;
+const GRID_COL_W = (GRID_RIGHT - GRID_LEFT) / GRID_COLS; // 100 px per column
+const GRID_TOP = 120;
+const GRID_BOTTOM = 480;
+
+// PvZ balance: all bureaucrats crawl at 0.5 px/frame (≈ 30 px/s at 60 fps)
+const BUREAUCRAT_SPEED = 30;
+const ORDERS_PHASE_DURATION = 10; // seconds
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -65,6 +77,9 @@ export default class BattleScene extends Phaser.Scene {
       fence.fillRect(width / 2 - 5, py, 10, 20);
     }
 
+    // Tactical grid overlay (Heroes 5 style)
+    this._drawGrid();
+
     // Hero zone marker
     const heroZone = this.add.graphics();
     heroZone.lineStyle(2, 0xffcc00, 0.5);
@@ -81,6 +96,31 @@ export default class BattleScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0)
       .setDepth(10);
+  }
+
+  // ─── Tactical Grid (Heroes 5 style) ─────────────────────────────────────────
+
+  _drawGrid() {
+    const grid = this.add.graphics();
+    grid.lineStyle(1, 0x00ff44, 0.18);
+
+    // Vertical column lines
+    for (let col = 0; col <= GRID_COLS; col++) {
+      const gx = GRID_LEFT + col * GRID_COL_W;
+      grid.moveTo(gx, GRID_TOP);
+      grid.lineTo(gx, GRID_BOTTOM);
+    }
+
+    // Horizontal lane-band borders
+    for (const y of LANES) {
+      grid.moveTo(GRID_LEFT, y - 30);
+      grid.lineTo(GRID_RIGHT, y - 30);
+      grid.moveTo(GRID_LEFT, y + 30);
+      grid.lineTo(GRID_RIGHT, y + 30);
+    }
+
+    grid.strokePath();
+    grid.setDepth(2);
   }
 
   // ─── Hero ─────────────────────────────────────────────────────────────────────
@@ -352,32 +392,71 @@ export default class BattleScene extends Phaser.Scene {
       onComplete: () => ann.destroy(),
     });
 
-    // Spawn enemies with a stagger
-    for (let i = 0; i < waveSize; i++) {
-      this.time.delayedCall(i * 1500 + 800, () => {
-        if (!this.gameOver) this._spawnEnemy();
-      });
-    }
+    // 10-second Orders Phase before enemies spawn
+    this._runOrdersPhase(() => {
+      // Spawn enemies with a stagger after the orders phase
+      for (let i = 0; i < waveSize; i++) {
+        this.time.delayedCall(i * 1500 + 800, () => {
+          if (!this.gameOver) this._spawnEnemy();
+        });
+      }
+    });
+  }
+
+  // ─── Orders Phase ─────────────────────────────────────────────────────────────
+
+  _runOrdersPhase(onComplete) {
+    const { width, height } = this.scale;
+    let remaining = ORDERS_PHASE_DURATION;
+
+    const bg = this.add
+      .rectangle(width / 2, 80, 300, 44, 0x1a237e, 0.82)
+      .setDepth(35);
+
+    const label = this.add
+      .text(width / 2, 80, `📋 Orders Phase: ${remaining}s`, {
+        fontSize: '18px',
+        fontFamily: 'Arial Black, Arial',
+        fontStyle: 'bold',
+        color: '#fff176',
+        stroke: '#000',
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setDepth(36);
+
+    const timer = this.time.addEvent({
+      delay: 1000,
+      repeat: ORDERS_PHASE_DURATION - 1,
+      callback: () => {
+        remaining -= 1;
+        if (remaining > 0) {
+          label.setText(`📋 Orders Phase: ${remaining}s`);
+        } else {
+          label.destroy();
+          bg.destroy();
+          onComplete();
+        }
+      },
+    });
   }
 
   _spawnEnemy() {
     const lane = LANES[Math.floor(Math.random() * LANES.length)];
     const roll = Math.random();
-    let tier, speed, hpMult;
+    let tier, hpMult;
 
     if (roll < 0.45) {
       tier = 'intern';
-      speed = Phaser.Math.Between(10, 18);
       hpMult = 0.7;
     } else if (roll < 0.80) {
       tier = 'clerk';
-      speed = Phaser.Math.Between(14, 22);
       hpMult = 1.0;
     } else {
       tier = 'department_head';
-      speed = Phaser.Math.Between(18, 25);
       hpMult = 2.2;
     }
+    const speed = BUREAUCRAT_SPEED;
 
     const hp = Math.floor(Calculator.enemyHP(this.wave) * hpMult);
     const enemy = new Enemy(this, SPAWN_X, lane, hp, speed, tier);
@@ -518,11 +597,14 @@ export default class BattleScene extends Phaser.Scene {
 
   // ─── Tower Placement ─────────────────────────────────────────────────────────
 
-  placeTower(laneIndex) {
+  placeTower(laneIndex, dropX) {
     const y = LANES[laneIndex];
-    // Place slightly right of hero, stagger if multiple geese on same lane
-    const laneTowers = this.towers.filter((t) => t.lane === laneIndex);
-    const x = 130 + laneTowers.length * 80;
+
+    // Snap dropX to the nearest grid column centre, restricted to player side (columns 0–3)
+    let col = Math.round((dropX - GRID_LEFT - GRID_COL_W / 2) / GRID_COL_W);
+    col = Phaser.Math.Clamp(col, 0, 3); // columns 0-3 are on the player's side of the fence
+    const x = GRID_LEFT + col * GRID_COL_W + GRID_COL_W / 2;
+
     const tower = new Tower(this, x, y, laneIndex);
     this.towers.push(tower);
     return tower;
