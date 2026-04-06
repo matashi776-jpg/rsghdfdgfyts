@@ -32,7 +32,7 @@ export default class PreloadScene extends Phaser.Scene {
 
   create() {
     this._ensureFallbacks();
-    this.scene.start('KhutirScene');
+    this.scene.start('MenuScene');
   }
 
   /**

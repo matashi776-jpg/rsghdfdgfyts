@@ -10,20 +10,31 @@ export default class Tower {
    * @param {number} x
    * @param {number} y
    * @param {number} lane  – 0|1|2
+   * @param {string} type  – 'standard' | 'fast' | 'mega'
    */
-  constructor(scene, x, y, lane) {
+  constructor(scene, x, y, lane, type = 'standard') {
     this.scene = scene;
     this.lane = lane;
     this.level = 1;
-    this.baseDamage = 30;
-    this.fireRate = 2000; // ms between shots
-    this.range = 220;     // px
     this.alive = true;
     this._boosted = false;
+
+    // Type-based stats
+    const typeStats = {
+      standard: { baseDamage: 30, fireRate: 2000, range: 220, scale: 0.15, tint: 0xffffff },
+      fast:     { baseDamage: 20, fireRate: 800,  range: 260, scale: 0.12, tint: 0x88ccff },
+      mega:     { baseDamage: 90, fireRate: 3500, range: 300, scale: 0.22, tint: 0xff8844 },
+    };
+    const stats = typeStats[type] || typeStats.standard;
+
+    this.baseDamage = stats.baseDamage;
+    this.fireRate = stats.fireRate;
+    this.range = stats.range;
     this._originalFireRate = this.fireRate;
 
     this.sprite = scene.physics.add.sprite(x, y, 'goose');
-    this.sprite.setScale(0.15);
+    this.sprite.setScale(stats.scale);
+    if (stats.tint !== 0xffffff) this.sprite.setTint(stats.tint);
     this.sprite.body.allowGravity = false;
     this.sprite.setImmovable(true);
     this.sprite.setDepth(6);
@@ -33,10 +44,11 @@ export default class Tower {
     this._shadow = scene.add.ellipse(x, y + 12, 28, 8, 0x000000, 0.38).setDepth(5);
 
     // Breathing idle tween: symmetric ±2% scale
+    const sc = stats.scale;
     scene.tweens.add({
       targets: this.sprite,
-      scaleX: 0.15 * 1.02,
-      scaleY: 0.15 * 1.02,
+      scaleX: sc * 1.02,
+      scaleY: sc * 1.02,
       duration: 1400,
       yoyo: true,
       repeat: -1,

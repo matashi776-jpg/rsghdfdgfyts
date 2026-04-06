@@ -4,7 +4,7 @@
  */
 import Phaser from 'phaser';
 import PreloadScene from './scenes/PreloadScene.js';
-import KhutirScene from './scenes/KhutirScene.js';
+import MenuScene from './scenes/MenuScene.js';
 import BattleScene from './scenes/BattleScene.js';
 import UIScene from './scenes/UIScene.js';
 
@@ -21,7 +21,7 @@ const config = {
       debug: false,
     },
   },
-  scene: [PreloadScene, KhutirScene, BattleScene, UIScene],
+  scene: [PreloadScene, MenuScene, BattleScene, UIScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
