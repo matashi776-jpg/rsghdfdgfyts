@@ -1,7 +1,7 @@
 {
-  "name": "lanchyn-vs-savok",
+  "name": "acid-khutir",
   "version": "1.0.0",
-  "description": "Lanchyn vs Savok – 2D Tactical Tower Defense",
+  "description": "ACID KHUTIR – Neon Psychedelic Cyber-Folk 2D Defense Game",
   "type": "module",
   "scripts": {
     "dev": "vite",
