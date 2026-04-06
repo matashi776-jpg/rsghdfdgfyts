@@ -180,7 +180,7 @@ export default class KhutirScene extends Phaser.Scene {
     btnZone.on('pointerdown', () => {
       this.time.delayedCall(120, () => {
         this.scene.start('BattleScene');
-        this.scene.start('UIScene');
+        this.scene.launch('UIScene');
       });
     });
 

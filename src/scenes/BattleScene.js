@@ -20,7 +20,7 @@ const GRID_COL_W = (GRID_RIGHT - GRID_LEFT) / GRID_COLS; // 100 px per column
 const GRID_TOP = 120;
 const GRID_BOTTOM = 480;
 
-const PROJECTILE_SPEED = 400;
+const PROJECTILE_SPEED = 600;
 const BUREAUCRAT_SPEED = 30;
 const ORDERS_PHASE_DURATION = 10; // seconds
 
@@ -31,13 +31,14 @@ export default class BattleScene extends Phaser.Scene {
 
   init() {
     this.wave = 1;
-    this.gold = 120;
-    this.lives = 1; // one hit = game over
+    this.gold = 10000;
+    this.lives = 1;
     this.enemies = [];
     this.towers = [];
     this.gameOver = false;
     this._waveInProgress = false;
     this._enemiesLeftInWave = 0;
+    this.selectedUnit = 'goose';
   }
 
   create() {
@@ -46,6 +47,7 @@ export default class BattleScene extends Phaser.Scene {
     this._buildProjectilePool();
     this._buildParticleSystem();
     this._setupPhysics();
+    this._setupPlacementClick();
     this._setupPause();
     this._setupBGMusic();
     this._startCountdown();
@@ -296,14 +298,59 @@ export default class BattleScene extends Phaser.Scene {
       }
     }, null, this);
 
-    // Enemies destroy defenders on contact
+    // Enemies destroy defenders on contact; enemy is stunned briefly (no ghosting)
     this.physics.add.overlap(this.enemiesGroup, this.defenders, function(enemySprite, defenderSprite) {
       const tower = defenderSprite.towerRef;
       if (!tower || !tower.alive) return;
       const idx = this.towers.indexOf(tower);
       tower.destroy();
       if (idx !== -1) this.towers.splice(idx, 1);
+      // Stun the enemy so it stops momentarily instead of walking through
+      const enemyObj = enemySprite.enemyRef;
+      if (enemyObj && enemyObj.alive) enemyObj.stun(800);
     }, null, this);
+  }
+
+  // ─── Click-to-place ──────────────────────────────────────────────────────────
+
+  _setupPlacementClick() {
+    const UNIT_COSTS = { goose: 100, superHero: 500, goldenGoose: 50 };
+    const { height } = this.scale;
+
+    this.input.on('pointerdown', (pointer) => {
+      if (this.gameOver || this._isPaused) return;
+      // Ignore clicks in the top bar and the bottom panel areas
+      if (pointer.y < 50 || pointer.y > height - 110) return;
+
+      const unitType = this.selectedUnit || 'goose';
+      const cost = UNIT_COSTS[unitType] ?? 100;
+
+      if (this.gold < cost) {
+        this.events.emit('notEnoughGold');
+        return;
+      }
+
+      // Snap Y to nearest lane
+      const laneIndex = this._nearestLane(pointer.y);
+      if (laneIndex === -1) return;
+
+      this.gold -= cost;
+      this.events.emit('goldChanged', this.gold);
+      this.placeTower(laneIndex, pointer.x, unitType);
+    });
+  }
+
+  _nearestLane(y) {
+    let best = -1;
+    let bestDist = 80; // max snap distance
+    for (let i = 0; i < LANES.length; i++) {
+      const dist = Math.abs(y - LANES[i]);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    }
+    return best;
   }
 
   // ─── Preparation Countdown ───────────────────────────────────────────────────
@@ -631,19 +678,18 @@ export default class BattleScene extends Phaser.Scene {
 
   // ─── Tower Placement ─────────────────────────────────────────────────────────
 
-  placeTower(laneIndex, dropX) {
+  placeTower(laneIndex, dropX, unitType = 'goose') {
     const y = LANES[laneIndex];
 
     // Snap dropX to the nearest grid column centre, restricted to player side (columns 0–3)
     let col = Math.round((dropX - GRID_LEFT - GRID_COL_W / 2) / GRID_COL_W);
-    col = Phaser.Math.Clamp(col, 0, 3); // columns 0-3 are on the player's side of the fence
+    col = Phaser.Math.Clamp(col, 0, 3);
     const x = GRID_LEFT + col * GRID_COL_W + GRID_COL_W / 2;
 
-    const tower = new Tower(this, x, y, laneIndex);
+    const tower = new Tower(this, x, y, laneIndex, unitType);
     this.towers.push(tower);
     this.defenders.add(tower.sprite);
 
-    // Dirt dust burst when goose hits the ground
     this._emitDustBurst(x, y + 10);
 
     return tower;

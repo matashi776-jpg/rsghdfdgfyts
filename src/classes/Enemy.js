@@ -108,6 +108,15 @@ export default class Enemy {
     });
   }
 
+  stun(duration) {
+    this._stunned = true;
+    if (this._stunTimer) this._stunTimer.remove();
+    this._stunTimer = this.scene.time.delayedCall(duration, () => {
+      this._stunned = false;
+      this._stunTimer = null;
+    });
+  }
+
   takeDamage(amount) {
     if (!this.alive) return;
     this.hp -= amount;
@@ -209,8 +218,12 @@ export default class Enemy {
 
   update() {
     if (!this.alive || !this.sprite || !this.sprite.active) return;
-    // Move left
-    this.sprite.setVelocityX(-this.speed);
+    // Move left (pause when stunned by a defender)
+    if (!this._stunned) {
+      this.sprite.setVelocityX(-this.speed);
+    } else {
+      this.sprite.setVelocityX(0);
+    }
     this._drawHPBar();
 
     // Keep shadow grounded under the unit
