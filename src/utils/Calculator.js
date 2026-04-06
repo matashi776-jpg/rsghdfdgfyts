@@ -28,6 +28,6 @@ export default class Calculator {
    * @returns {number}
    */
   static goldReward(wave) {
-    return Math.floor(15 + 5 * Math.sqrt(wave));
+    return 100;
   }
 }
