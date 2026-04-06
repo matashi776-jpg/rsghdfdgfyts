@@ -23,7 +23,7 @@ export default class PreloadScene extends Phaser.Scene {
       console.warn(`Asset not found: ${file.key} (${file.url}) – using fallback`);
     });
 
-    this.load.image('bg', '/image_1.png');
+    this.load.image('bg', '/bg.jpg');
     this.load.image('hero', '/hero.png');
     this.load.image('goose', '/goose.png');
     this.load.image('borshch', '/borshch.png');
