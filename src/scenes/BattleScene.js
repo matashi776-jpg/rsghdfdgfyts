@@ -6,19 +6,19 @@ import Calculator from '../utils/Calculator.js';
 import Enemy from '../classes/Enemy.js';
 import Tower from '../classes/Tower.js';
 
-const LANES = [150, 300, 450];
-const SPAWN_X = 870;
+const LANES = [350, 450, 550];
+const SPAWN_X = 850;
 const HERO_X = 60;
-const HERO_Y = 300;
+const HERO_Y = 450;
 const DEATH_X = 100;
 
-// Grid system (Heroes 5 tactics)
+// Grid system (Heroes 5 tactics) – restricted to the dirt/bottom half (Y 300–600)
 const GRID_LEFT = 80;
 const GRID_RIGHT = 880;
 const GRID_COLS = 8;
 const GRID_COL_W = (GRID_RIGHT - GRID_LEFT) / GRID_COLS; // 100 px per column
-const GRID_TOP = 120;
-const GRID_BOTTOM = 480;
+const GRID_TOP = 300;
+const GRID_BOTTOM = 600;
 
 // PvZ balance: all bureaucrats crawl at 0.5 px/frame (≈ 30 px/s at 60 fps)
 const BUREAUCRAT_SPEED = 30;
