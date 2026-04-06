@@ -28,7 +28,9 @@ const ALL_PERKS = [
     accent:    0x00ffff,
     textColor: '#00ffff',
     glowColor: '#00ffff',
-    effect: (mod) => { mod.wallDefense = mod.wallDefense / 0.7; },
+    // House takes 30% less damage: wallDefense acts as divisor in damage formula,
+    // so multiplying by 1/0.7 ≈ 1.43 reduces incoming damage to 70% of original.
+    effect: (mod) => { mod.wallDefense *= (1 / 0.7); },
   },
   {
     name:      'Кислотний Буряк',

@@ -129,19 +129,6 @@ export default class StoryScene extends Phaser.Scene {
       height * 0.50,
     );
 
-    // Extra pulse on final line text scale
-    this.time.delayedCall(10500, () => {
-      const finalTxt = this.add.text(width / 2, height * 0.50, '', {}).setAlpha(0);
-      this.tweens.add({
-        targets: finalTxt,
-        scaleX: 1.12,
-        scaleY: 1.12,
-        duration: 600,
-        yoyo: true,
-        repeat: 2,
-      });
-    });
-
     // ── Transition ────────────────────────────────────────────────────────────
     this.time.delayedCall(15000, () => {
       this.cameras.main.fadeOut(900, 0, 0, 20);
