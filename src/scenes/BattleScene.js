@@ -23,6 +23,7 @@ const GRID_BOTTOM = 480;
 // PvZ balance: all bureaucrats crawl at 0.5 px/frame (≈ 30 px/s at 60 fps)
 const BUREAUCRAT_SPEED = 30;
 const ORDERS_PHASE_DURATION = 10; // seconds
+const ENEMY_KILL_REWARD = 50; // ₴ awarded per enemy killed via overlap
 
 export default class BattleScene extends Phaser.Scene {
   constructor() {
@@ -31,7 +32,7 @@ export default class BattleScene extends Phaser.Scene {
 
   init() {
     this.wave = 1;
-    this.gold = 120;
+    this.gold = 5000;
     this.lives = 1; // one hit = game over
     this.enemies = [];
     this.towers = [];
@@ -159,6 +160,8 @@ export default class BattleScene extends Phaser.Scene {
         proj.isProjectile = true;
       },
     });
+    // Expose as 'projectiles' per spec
+    this.projectiles = this._borshchPool;
   }
 
   _getProjectile() {
@@ -276,8 +279,40 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Physics ──────────────────────────────────────────────────────────────────
 
   _setupPhysics() {
-    // Overlap between projectiles and enemies is handled in update()
-    // to avoid destroy-in-callback issues.
+    // Create a physics group for enemy sprites so projectiles can overlap
+    this.enemyGroup = this.physics.add.group();
+
+    const updateUI = () => this.events.emit('goldChanged', this.gold);
+
+    const projectiles = this.projectiles;
+    const enemies = this.enemyGroup;
+
+    this.physics.add.overlap(projectiles, enemies, (projectile, enemySprite) => {
+      if (!projectile.active) return;
+      const enemy = enemySprite.enemyRef;
+      if (!enemy || !enemy.alive) return;
+
+      // Recycle projectile
+      this._recycleProjectile(projectile);
+
+      // Deal damage and emit visual hit effect
+      const vx = projectile.body ? projectile.body.velocity.x : 0;
+      const vy = projectile.body ? projectile.body.velocity.y : 0;
+      this._emitHitExplosion(projectile.x, projectile.y, vx, vy);
+
+      enemy.takeDamage(projectile._damage || 30);
+
+      if (!enemy.alive) {
+        const idx = this.enemies.indexOf(enemy);
+        if (idx !== -1) {
+          this._onEnemyKilled(enemy, idx);
+        }
+      }
+
+      // Award bonus gold per hit
+      this.gold += ENEMY_KILL_REWARD;
+      updateUI();
+    });
   }
 
   // ─── Preparation Countdown ───────────────────────────────────────────────────
@@ -497,6 +532,10 @@ export default class BattleScene extends Phaser.Scene {
     const hp = Math.floor(Calculator.enemyHP(this.wave) * hpMult);
     const enemy = new Enemy(this, SPAWN_X, lane, hp, speed, tier);
     this.enemies.push(enemy);
+    // Add sprite to physics group for overlap detection
+    if (enemy.sprite) {
+      this.enemyGroup.add(enemy.sprite);
+    }
   }
 
   // ─── Projectile Firing ───────────────────────────────────────────────────────
@@ -645,7 +684,7 @@ export default class BattleScene extends Phaser.Scene {
 
   // ─── Tower Placement ─────────────────────────────────────────────────────────
 
-  placeTower(laneIndex, dropX) {
+  placeTower(laneIndex, dropX, type = 'standard') {
     const y = LANES[laneIndex];
 
     // Snap dropX to the nearest grid column centre, restricted to player side (columns 0–3)
@@ -653,10 +692,10 @@ export default class BattleScene extends Phaser.Scene {
     col = Phaser.Math.Clamp(col, 0, 3); // columns 0-3 are on the player's side of the fence
     const x = GRID_LEFT + col * GRID_COL_W + GRID_COL_W / 2;
 
-    const tower = new Tower(this, x, y, laneIndex);
+    const tower = new Tower(this, x, y, laneIndex, type);
     this.towers.push(tower);
 
-    // Dirt dust burst when goose hits the ground
+    // Dirt dust burst when unit lands on the ground
     this._emitDustBurst(x, y + 10);
 
     return tower;

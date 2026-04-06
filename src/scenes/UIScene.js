@@ -5,6 +5,12 @@
  * the Medical Ointment hero ability button, and a centred title/start overlay.
  */
 
+const UNIT_TYPES = [
+  { key: 'standard', label: 'Standard Goose', cost: 100, tint: '#ffffff', type: 'standard' },
+  { key: 'fast',     label: 'Fast Shooter',   cost: 250, tint: '#88ccff', type: 'fast' },
+  { key: 'mega',     label: 'Mega Hero',      cost: 500, tint: '#ff8844', type: 'mega' },
+];
+
 const GOOSE_COST = 50;
 const OINTMENT_COST = 100;
 const OINTMENT_COOLDOWN = 30000; // 30 s
@@ -25,6 +31,7 @@ export default class UIScene extends Phaser.Scene {
     this._buildTitleOverlay(width, height);
     this._buildTopBar(width);
     this._buildBottomBar(width, height);
+    this._buildUnitButtons(width, height);
     this._buildDragIcon(width, height);
     this._buildOintmentButton(width, height);
     this._buildLaneDropZones(width, height);
@@ -234,7 +241,91 @@ export default class UIScene extends Phaser.Scene {
       .setDepth(41);
   }
 
-  // ─── Draggable Goose Icon ────────────────────────────────────────────────────
+  // ─── Unit Purchase Buttons ───────────────────────────────────────────────────
+
+  _buildUnitButtons(width, height) {
+    this._unitBtns = [];
+    const btnW = 130;
+    const btnH = 60;
+    const startX = 140;
+    const btnY = height - 38;
+    const spacing = 145;
+
+    UNIT_TYPES.forEach((unit, i) => {
+      const bx = startX + i * spacing;
+
+      // Button background
+      const gfx = this.add.graphics().setDepth(41);
+      const _draw = (hover) => {
+        gfx.clear();
+        gfx.fillStyle(hover ? 0x2a1a00 : 0x1a0a00, 0.95);
+        gfx.fillRoundedRect(bx - btnW / 2, btnY - btnH / 2, btnW, btnH, 5);
+        gfx.lineStyle(2, 0xb8860b, hover ? 1 : 0.7);
+        gfx.strokeRoundedRect(bx - btnW / 2, btnY - btnH / 2, btnW, btnH, 5);
+      };
+      _draw(false);
+
+      // Unit name label
+      this.add
+        .text(bx, btnY - 14, unit.label, {
+          fontSize: '11px',
+          fontFamily: '"Times New Roman", Georgia, serif',
+          fontStyle: 'bold',
+          color: unit.tint,
+          stroke: '#000000',
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5)
+        .setDepth(42);
+
+      // Cost label
+      this.add
+        .text(bx, btnY + 4, `${unit.cost} ₴`, {
+          fontSize: '13px',
+          fontFamily: '"Times New Roman", Georgia, serif',
+          fontStyle: 'bold',
+          color: '#ffd54f',
+          stroke: '#000000',
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5)
+        .setDepth(42);
+
+      // Hit zone
+      const zone = this.add
+        .zone(bx, btnY, btnW, btnH)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(43);
+
+      zone.on('pointerover', () => _draw(true));
+      zone.on('pointerout', () => _draw(false));
+      zone.on('pointerdown', () => {
+        this._purchaseUnit(unit);
+      });
+
+      this._unitBtns.push(zone);
+    });
+  }
+
+  _purchaseUnit(unit) {
+    if (this._battle.gameOver) return;
+    if (this._battle.gold < unit.cost) {
+      this._showNotEnoughGold();
+      return;
+    }
+
+    this._battle.gold -= unit.cost;
+    this._goldText.setText(`₴ ${this._battle.gold}`);
+    this._battle.events.emit('goldChanged', this._battle.gold);
+
+    // Place in a random lane at mid-field column
+    const lane = Phaser.Math.Between(0, 2);
+    const dropX = 200; // mid player side
+    this._battle.placeTower(lane, dropX, unit.type);
+
+    const { width } = this.scale;
+    this._floatingText(width / 2, 55, `-${unit.cost} ₴  [${unit.label}] placed!`, '#80cbc4');
+  }
 
   _buildDragIcon(width, height) {
     const iconX = 60;
@@ -584,5 +675,8 @@ export default class UIScene extends Phaser.Scene {
   _disableUI() {
     if (this._gooseDragZone) this._gooseDragZone.disableInteractive();
     if (this._ointmentBg) this._ointmentBg.disableInteractive();
+    if (this._unitBtns) {
+      for (const btn of this._unitBtns) btn.disableInteractive();
+    }
   }
 }
