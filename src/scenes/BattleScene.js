@@ -20,8 +20,8 @@ const GRID_COL_W = (GRID_RIGHT - GRID_LEFT) / GRID_COLS; // 100 px per column
 const GRID_TOP = 120;
 const GRID_BOTTOM = 480;
 
-// PvZ balance: all bureaucrats crawl at 0.5 px/frame (≈ 30 px/s at 60 fps)
-const BUREAUCRAT_SPEED = 30;
+// PvZ balance: bureaucrats crawl at 0.25 px/frame (≈ 15 px/s at 60 fps)
+const BUREAUCRAT_SPEED = 15;
 const ORDERS_PHASE_DURATION = 10; // seconds
 
 export default class BattleScene extends Phaser.Scene {
@@ -396,7 +396,7 @@ export default class BattleScene extends Phaser.Scene {
     this._runOrdersPhase(() => {
       // Spawn enemies with a stagger after the orders phase
       for (let i = 0; i < waveSize; i++) {
-        this.time.delayedCall(i * 1500 + 800, () => {
+        this.time.delayedCall(i * 8000 + 800, () => {
           if (!this.gameOver) this._spawnEnemy();
         });
       }
