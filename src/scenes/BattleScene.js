@@ -333,6 +333,7 @@ export default class BattleScene extends Phaser.Scene {
 
     enemy.maxHp           = hp;
     enemy.hp              = hp;
+    enemy.speedMult       = speedMult;  // stored for poison slow / blast recovery
     enemy.isBoss          = false;
     enemy.isAttackingWall = false;
     enemy.poisonTimer     = 0;   // ms accumulator for poison ticks
@@ -569,12 +570,12 @@ export default class BattleScene extends Phaser.Scene {
             this._killEnemy(enemy);
           }
         }
-        // Slow effect: reduce velocity magnitude
+        // Slow effect: reduce velocity magnitude, respecting enemy-type speed multiplier
         if (!enemy.isBoss && enemy.body && this.modifiers.poisonSlow > 0) {
           const vx = enemy.body.velocity.x;
-          // Only slow if moving (not at wall)
           if (vx < 0) {
-            const targetSpeed = Calculator.enemySpeed(this.wave) * (1 - this.modifiers.poisonSlow);
+            const mult        = enemy.speedMult || 1;
+            const targetSpeed = Calculator.enemySpeed(this.wave, mult) * (1 - this.modifiers.poisonSlow);
             if (Math.abs(vx) > targetSpeed) {
               enemy.body.setVelocityX(-targetSpeed);
             }
@@ -653,10 +654,13 @@ export default class BattleScene extends Phaser.Scene {
 
   /** Folk Overdrive — temporarily boost all stats by 10%. */
   _applyFolkBuff(activate) {
-    const factor = activate ? 0.9 : (1 / 0.9);
+    const FOLK_BUFF_FACTOR = 1.1;
+    const factor = activate ? (1 / FOLK_BUFF_FACTOR) : FOLK_BUFF_FACTOR;
+    // Lower attackSpeed value = faster shooting; boost reduces it by 1/1.1
     this.modifiers.attackSpeed  = Math.max(0.1, this.modifiers.attackSpeed  * factor);
-    this.modifiers.wallDefense *= activate ? (1 / 0.9) : 0.9;
-    this._baseBulletDamage      = Math.round(this._baseBulletDamage * (activate ? 1.1 : (1 / 1.1)));
+    // Higher wallDefense = less damage taken; boost increases it by 1.1
+    this.modifiers.wallDefense *= activate ? FOLK_BUFF_FACTOR : (1 / FOLK_BUFF_FACTOR);
+    this._baseBulletDamage      = Math.round(this._baseBulletDamage * (activate ? FOLK_BUFF_FACTOR : (1 / FOLK_BUFF_FACTOR)));
 
     if (activate) {
       this._floatingText && this._floatingText(
@@ -683,10 +687,11 @@ export default class BattleScene extends Phaser.Scene {
       // Knock back by adding a rightward impulse
       const currentVX = enemy.body.velocity.x;
       enemy.body.setVelocityX(currentVX + 300);
-      // Restore normal velocity after 400 ms
+      // Restore normal velocity after 400 ms, honouring the enemy's original speed multiplier
+      const mult = enemy.speedMult || 1;
       this.time.delayedCall(400, () => {
         if (enemy.active && enemy.body) {
-          enemy.body.setVelocityX(-Calculator.enemySpeed(this.wave));
+          enemy.body.setVelocityX(-Calculator.enemySpeed(this.wave, mult));
         }
       });
     }

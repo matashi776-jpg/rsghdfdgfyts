@@ -119,7 +119,7 @@ export default class Calculator {
    * @returns {number}
    */
   static weaponDamageBonus(level) {
-    const bonuses = [0, 10, 20, 30, 30];
+    const bonuses = [0, 10, 20, 30, 40];
     return bonuses[Math.min(level, bonuses.length - 1)];
   }
 }

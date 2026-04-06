@@ -268,6 +268,7 @@ export default class MetaScene extends Phaser.Scene {
     const headers = ['Хв.', 'HP', 'Шв.', 'Скл.'];
     const colW    = 55;
     const startX  = x + 10;
+    const ROW_HEIGHT = 26;
 
     headers.forEach((h, i) => {
       this.add.text(startX + i * colW, y + 28, h, {
@@ -275,13 +276,13 @@ export default class MetaScene extends Phaser.Scene {
       }).setDepth(5);
     });
 
-    for (let w = 1; w <= Math.min(10, Math.floor((height - y - 80) / 26)); w++) {
+    for (let w = 1; w <= Math.min(10, Math.floor((height - y - 80) / ROW_HEIGHT)); w++) {
       const hp    = Calculator.enemyHP(w);
       const speed = Calculator.enemySpeed(w);
       const count = 6 + Math.floor(w / 2);
       const diff  = Math.round(Calculator.waveDifficulty(hp, speed, count));
       const row   = [w, hp, speed, diff];
-      const rowY  = y + 50 + (w - 1) * 24;
+      const rowY  = y + 50 + (w - 1) * ROW_HEIGHT;
 
       row.forEach((val, i) => {
         this.add.text(startX + i * colW, rowY, String(val), {
