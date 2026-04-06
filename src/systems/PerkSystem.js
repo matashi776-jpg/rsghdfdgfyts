@@ -55,7 +55,7 @@ export default class PerkSystem {
     this.active.push(perkId);
   }
 
-  hasPerks(perkId) {
+  hasPerk(perkId) {
     return this.active.includes(perkId);
   }
 }

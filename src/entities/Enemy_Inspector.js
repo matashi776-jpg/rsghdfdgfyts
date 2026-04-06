@@ -11,6 +11,6 @@ export default class Enemy_Inspector extends Enemy {
     const speed = Math.floor(DifficultyDirector.enemySpeed(wave) * 1.8);
     super(scene, x, y, hp, speed, 'intern');
     this.type = 'inspector';
-    this.goldValue = DifficultyDirector.goldReward(wave) * 1.5;
+    this.goldValue = Math.floor(DifficultyDirector.goldReward(wave) * 1.5);
   }
 }

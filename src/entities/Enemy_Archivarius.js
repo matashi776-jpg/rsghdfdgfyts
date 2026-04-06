@@ -11,6 +11,6 @@ export default class Enemy_Archivarius extends Enemy {
     const speed = Math.floor(DifficultyDirector.enemySpeed(wave) * 0.55);
     super(scene, x, y, hp, speed, 'department_head');
     this.type = 'archivarius';
-    this.goldValue = DifficultyDirector.goldReward(wave) * 3;
+    this.goldValue = Math.floor(DifficultyDirector.goldReward(wave) * 3);
   }
 }
