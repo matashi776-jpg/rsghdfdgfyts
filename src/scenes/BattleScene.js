@@ -9,7 +9,18 @@
  *  - Neon projectile trails (pink/orange additive particles)
  *  - House tiers with gameplay bonuses
  *  - Neon visual style throughout
+ *
+ * V4.1 additions:
+ *  - WaveSystem    – extracted wave state & timers
+ *  - CollisionSystem – Arcade overlap + raycast for fast bullets
+ *  - UpgradeSystem – centralised perk registry
+ *  - GlobalEvents  – cross-scene event bus
  */
+import { GlobalEvents }    from '../systems/EventBus.js';
+import WaveSystem          from '../systems/WaveSystem.js';
+import CollisionSystem     from '../systems/CollisionSystem.js';
+import UpgradeSystem       from '../systems/UpgradeSystem.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -78,13 +89,19 @@ export default class BattleScene extends Phaser.Scene {
       null,
       this,
     );
-    this.physics.add.overlap(
+
+    // ── Systems ─────────────────────────────────────────────────────────────
+    // CollisionSystem registers the Arcade overlap for projectiles → enemies
+    // AND adds a per-frame raycast check for fast-moving bullets.
+    this._collisionSystem = new CollisionSystem(
+      this,
       this.projectilesGroup,
       this.enemiesGroup,
       (proj, enemy) => this._hitEnemy(proj, enemy),
-      null,
-      this,
     );
+
+    // UpgradeSystem: centralised perk registry (used by PerkScene & UI)
+    this._upgradeSystem = new UpgradeSystem(this);
 
     // ── HUD graphics ────────────────────────────────────────────────────────
     this._hpGfx        = this.add.graphics().setDepth(10);
@@ -149,8 +166,9 @@ export default class BattleScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // ── Start first wave ────────────────────────────────────────────────────
-    this._startWave();
+    // ── WaveSystem: manages wave state, timers, and difficulty scaling ───────
+    this._waveSystem = new WaveSystem(this);
+    this._waveSystem.start();
 
     // ── Launch persistent UI overlay ────────────────────────────────────────
     this.scene.launch('UIScene');
@@ -215,53 +233,14 @@ export default class BattleScene extends Phaser.Scene {
     }
   }
 
-  // ─── Wave Management ──────────────────────────────────────────────────────
-
-  _startWave() {
-    this.waveActive   = true;
-    this._waveElapsed = 0;
-    this._waveLabelTxt.setText(`Хвиля: ${this.wave}`);
-
-    if (this.wave === 10) {
-      this._spawnBoss();
-      this._spawnTimer   = null;
-      this._waveEndTimer = null;
-    } else {
-      const interval = Math.max(500, 2000 - this.wave * 100);
-      this._spawnTimer = this.time.addEvent({
-        delay: interval,
-        loop:  true,
-        callbackScope: this,
-        callback: this._spawnEnemy,
-      });
-      this._spawnEnemy();
-
-      this._waveEndTimer = this.time.delayedCall(
-        this._waveDuration,
-        this._endWave,
-        [],
-        this,
-      );
-    }
-  }
+  // ─── Wave Management (delegated to WaveSystem) ────────────────────────────
 
   _endWave() {
-    this.waveActive = false;
-    if (this._spawnTimer)   { this._spawnTimer.remove();   this._spawnTimer   = null; }
-    if (this._waveEndTimer) { this._waveEndTimer.remove(); this._waveEndTimer = null; }
-
-    if (this.wave === 5 || this.wave === 10) {
-      this.scene.pause();
-      this.scene.launch('PerkScene', { modifiers: this.modifiers, wave: this.wave });
-    } else {
-      this.wave++;
-      this._startWave();
-    }
+    this._waveSystem.end();
   }
 
   resumeFromPerk() {
-    this.wave++;
-    this._startWave();
+    this._waveSystem.nextWave();
   }
 
   // ─── Enemy Spawning ───────────────────────────────────────────────────────
@@ -455,6 +434,9 @@ export default class BattleScene extends Phaser.Scene {
     if (this.gameOver) return;
     const { width } = this.scale;
 
+    // Raycast collision check (catches fast bullets that tunnel through enemies)
+    this._collisionSystem.update();
+
     // Defender fire timers
     const cooldown = Math.max(300, 1200 * this.modifiers.attackSpeed);
     for (const def of this.defendersGroup.getChildren()) {
@@ -558,8 +540,7 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Game Over ────────────────────────────────────────────────────────────
 
   _triggerGameOver() {
-    if (this._spawnTimer)   this._spawnTimer.remove();
-    if (this._waveEndTimer) this._waveEndTimer.remove();
+    this._waveSystem.destroy();
     this._passiveTimer.remove();
 
     // Reset BGM rate

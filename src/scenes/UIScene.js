@@ -3,7 +3,11 @@
  * HUD overlay — Оборона Ланчина V4.0 NEON PSYCHEDELIC
  * Displays: "Рівень: [X] | Неон: [₴] | Час: [Y] сек", upgrade button,
  * and boss bar "КІБЕР-БОС: ТОВАРИШ ВАХТЕРША". All text is glowing neon.
+ *
+ * V4.1: listens to GlobalEvents 'waveChanged' for an animated bounce effect.
  */
+import { GlobalEvents } from '../systems/EventBus.js';
+
 export default class UIScene extends Phaser.Scene {
   constructor() {
     super({ key: 'UIScene' });
@@ -63,6 +67,18 @@ export default class UIScene extends Phaser.Scene {
 
     // Track elapsed seconds for the timer display
     this._elapsedSec = 0;
+
+    // ── Wave-change animation (driven by GlobalEvents from WaveSystem) ────────
+    GlobalEvents.on('waveChanged', (wave) => {
+      // Brief neon bounce on the status line to announce the new wave
+      this._statusTxt.setScale(1.4);
+      this.tweens.add({
+        targets:  this._statusTxt,
+        scale:    1,
+        duration: 300,
+        ease:     'Bounce',
+      });
+    }, this);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
