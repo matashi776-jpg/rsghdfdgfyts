@@ -26,14 +26,18 @@ export default class Tower {
     this.sprite.setScale(0.15);
     this.sprite.body.allowGravity = false;
     this.sprite.setImmovable(true);
+    this.sprite.setDepth(6);
     this.sprite.towerRef = this;
 
-    // Breathing idle tween
+    // Drop shadow – oval beneath the goose, stays fixed (tower doesn't move)
+    this._shadow = scene.add.ellipse(x, y + 12, 28, 8, 0x000000, 0.38).setDepth(5);
+
+    // Breathing idle tween: symmetric ±2% scale
     scene.tweens.add({
       targets: this.sprite,
-      scaleX: 0.155,
-      scaleY: 0.145,
-      duration: 1200,
+      scaleX: 0.15 * 1.02,
+      scaleY: 0.15 * 1.02,
+      duration: 1400,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
@@ -112,6 +116,10 @@ export default class Tower {
     this.alive = false;
     if (this._shootTimer) {
       this._shootTimer.destroy();
+    }
+    if (this._shadow) {
+      this._shadow.destroy();
+      this._shadow = null;
     }
     if (this.sprite && this.sprite.active) {
       this.sprite.destroy();

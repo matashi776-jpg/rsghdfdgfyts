@@ -180,20 +180,53 @@ export default class BattleScene extends Phaser.Scene {
     this._particles = [];
   }
 
-  _emitHitExplosion(x, y) {
-    // Spawn small red circles that spread and fade
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8;
-      const speed = Phaser.Math.Between(40, 100);
-      const p = this.add.circle(x, y, Phaser.Math.Between(3, 7), 0xcc2222, 1).setDepth(15);
+  _emitHitExplosion(x, y, velX = 0, velY = 0) {
+    // Directional borsch splash: burst moves opposite to projectile travel
+    const mag = Math.sqrt(velX * velX + velY * velY) || 1;
+    const splashDirX = -(velX / mag);
+    const splashDirY = -(velY / mag);
+
+    for (let i = 0; i < 10; i++) {
+      // Mix directional spread with cone scatter
+      const scatter = ((Math.random() - 0.5) * Math.PI) / 1.8;
+      const cos = Math.cos(scatter);
+      const sin = Math.sin(scatter);
+      const px = splashDirX * cos - splashDirY * sin;
+      const py = splashDirX * sin + splashDirY * cos;
+      const speed = Phaser.Math.Between(50, 120);
+      const radius = Phaser.Math.Between(3, 7);
+      const p = this.add.circle(x, y, radius, 0xcc2222, 1).setDepth(15);
       this.tweens.add({
         targets: p,
-        x: x + Math.cos(angle) * speed,
-        y: y + Math.sin(angle) * speed,
+        x: x + px * speed,
+        y: y + py * speed,
         alpha: 0,
         scaleX: 0,
         scaleY: 0,
-        duration: 400,
+        duration: Phaser.Math.Between(300, 500),
+        ease: 'Power2',
+        onComplete: () => p.destroy(),
+      });
+    }
+  }
+
+  _emitDustBurst(x, y) {
+    // Brown/grey dust when a goose lands on the grid
+    const dustColors = [0x8b7355, 0xa09070, 0x6e6050, 0xc0b090];
+    for (let i = 0; i < 12; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Phaser.Math.Between(20, 70);
+      const color = dustColors[Math.floor(Math.random() * dustColors.length)];
+      const radius = Phaser.Math.Between(2, 6);
+      const p = this.add.circle(x, y, radius, color, 0.85).setDepth(14);
+      this.tweens.add({
+        targets: p,
+        x: x + Math.cos(angle) * speed,
+        y: y + Math.sin(angle) * speed - Phaser.Math.Between(10, 30),
+        alpha: 0,
+        scaleX: 0,
+        scaleY: 0,
+        duration: Phaser.Math.Between(400, 700),
         ease: 'Power2',
         onComplete: () => p.destroy(),
       });
@@ -480,7 +513,14 @@ export default class BattleScene extends Phaser.Scene {
     const dy = target.sprite.y - proj.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
     const speed = 320;
-    proj.setVelocity((dx / dist) * speed, (dy / dist) * speed);
+
+    // Parabolic arc: slight upward kick + body gravity creates a throw arc.
+    // arcKick offsets the initial Y velocity upward so the midpoint of the
+    // flight visibly rises before gravity pulls it back down.
+    const arcKick = -55;
+    proj.setVelocity((dx / dist) * speed, (dy / dist) * speed + arcKick);
+    // 180 px/s² gives a gentle arc without wildly overshooting targets
+    proj.body.gravity.y = 180;
 
     // Rotation tween
     this.tweens.add({
@@ -493,6 +533,8 @@ export default class BattleScene extends Phaser.Scene {
     proj._damage = tower.damage;
     proj._target = target;
     proj._targetId = target.sprite ? target.sprite.x + '' + target.sprite.y : '';
+    proj._velX = (dx / dist) * speed; // store for directional splash
+    proj._velY = (dy / dist) * speed;
   }
 
   // ─── Main Update ─────────────────────────────────────────────────────────────
@@ -541,7 +583,9 @@ export default class BattleScene extends Phaser.Scene {
 
         if (Math.abs(dx) < hitRadius && Math.abs(dy) < hitRadius) {
           // Hit!
-          this._emitHitExplosion(proj.x, proj.y);
+          const vx = proj.body.velocity.x;
+          const vy = proj.body.velocity.y;
+          this._emitHitExplosion(proj.x, proj.y, vx, vy);
           this._recycleProjectile(proj);
           enemy.takeDamage(proj._damage || 30);
 
@@ -571,6 +615,7 @@ export default class BattleScene extends Phaser.Scene {
     proj.setActive(false).setVisible(false);
     proj.setVelocity(0, 0);
     proj.body.enable = false;
+    proj.body.gravity.y = 0; // reset arc gravity
     proj.setAngle(0);
   }
 
@@ -610,6 +655,10 @@ export default class BattleScene extends Phaser.Scene {
 
     const tower = new Tower(this, x, y, laneIndex);
     this.towers.push(tower);
+
+    // Dirt dust burst when goose hits the ground
+    this._emitDustBurst(x, y + 10);
+
     return tower;
   }
 
