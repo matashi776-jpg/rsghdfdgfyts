@@ -56,32 +56,35 @@ export default class BattleScene extends Phaser.Scene {
   _buildEnvironment() {
     const { width, height } = this.scale;
 
-    // Green farm (left half) / grey office (right half)
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0x33691e, 0x33691e, 0x616161, 0x616161, 1);
-    bg.fillRect(0, 0, width, height);
-
-    // Lane tracks
-    for (const y of LANES) {
-      const lane = this.add.graphics();
-      lane.lineStyle(2, 0xc8b900, 0.35);
-      lane.strokeRect(80, y - 30, width - 100, 60);
+    // Background: image_1.png (Heroes 5 style), fallback to dark solid
+    if (this.textures.exists('bg')) {
+      this.add
+        .image(width / 2, height / 2, 'bg')
+        .setDisplaySize(width, height)
+        .setDepth(0);
+    } else {
+      const bgFill = this.add.graphics().setDepth(0);
+      bgFill.fillStyle(0x0a0a1a, 1);
+      bgFill.fillRect(0, 0, width, height);
     }
 
-    // Dividing fence
-    const fence = this.add.graphics();
-    fence.lineStyle(3, 0x8d6e63, 0.9);
-    fence.strokeRect(width / 2 - 1, 0, 2, height);
-    for (let py = 20; py < height; py += 40) {
-      fence.fillStyle(0x8d6e63, 1);
-      fence.fillRect(width / 2 - 5, py, 10, 20);
-    }
+    // Central chasm divider – powerful visual separator
+    const chasm = this.add.graphics().setDepth(1);
+    chasm.fillStyle(0x000000, 0.80);
+    chasm.fillRect(width / 2 - 10, 0, 20, height);
+    chasm.lineStyle(2, 0xb8860b, 1);
+    chasm.moveTo(width / 2 - 10, 0);
+    chasm.lineTo(width / 2 - 10, height);
+    chasm.strokePath();
+    chasm.moveTo(width / 2 + 10, 0);
+    chasm.lineTo(width / 2 + 10, height);
+    chasm.strokePath();
 
-    // Tactical grid overlay (Heroes 5 style)
+    // Tactical grid overlay (Heroes 5 style) – battlefield is clean and empty
     this._drawGrid();
 
     // Hero zone marker
-    const heroZone = this.add.graphics();
+    const heroZone = this.add.graphics().setDepth(3);
     heroZone.lineStyle(2, 0xffcc00, 0.5);
     heroZone.strokeCircle(HERO_X, HERO_Y, 50);
 
