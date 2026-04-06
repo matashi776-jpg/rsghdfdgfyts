@@ -4,6 +4,8 @@
  * Displays: "Рівень: [X] | Неон: [₴] | Час: [Y] сек", upgrade button,
  * and boss bar "КІБЕР-БОС: ТОВАРИШ ВАХТЕРША". All text is glowing neon.
  */
+import { SoundEvents } from '../data/SoundEvents.js';
+
 export default class UIScene extends Phaser.Scene {
   constructor() {
     super({ key: 'UIScene' });
@@ -45,19 +47,24 @@ export default class UIScene extends Phaser.Scene {
     }).setOrigin(0, 0).setDepth(20).setInteractive({ useHandCursor: true });
 
     this._upgradeBtn.on('pointerover', () => {
-      if (!this._isBattlePaused()) this._upgradeBtn.setColor('#ff00ff');
+      if (!this._isBattlePaused()) {
+        this._upgradeBtn.setColor('#ff00ff');
+        this.events.emit(SoundEvents.UI_HOVER);
+      }
     });
     this._upgradeBtn.on('pointerout', () => {
       this._upgradeBtn.setColor('#00ffff');
     });
     this._upgradeBtn.on('pointerdown', () => {
       if (this._isBattlePaused()) return;
+      this.events.emit(SoundEvents.UI_CLICK);
       const battle = this.scene.get('BattleScene');
       if (!battle) return;
       const cost = this._upgradeCost(battle.houseLevel);
       if (cost > 0 && battle.money >= cost && battle.houseLevel < 3) {
         battle.money -= cost;
         battle.upgradeHouse();
+        this.events.emit(SoundEvents.UI_SELECT);
       }
     });
 

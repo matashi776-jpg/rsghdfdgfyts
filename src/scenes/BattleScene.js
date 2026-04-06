@@ -9,7 +9,14 @@
  *  - Neon projectile trails (pink/orange additive particles)
  *  - House tiers with gameplay bonuses
  *  - Neon visual style throughout
+ * V4.1 additions:
+ *  - Sound event emission via SoundEvents constants
+ *  - Voice-line subtitles via VoiceSubtitle + VoiceLines data
  */
+import { SoundEvents }   from '../data/SoundEvents.js';
+import { VoiceLines, randomLine } from '../data/VoiceLines.js';
+import VoiceSubtitle     from '../classes/VoiceSubtitle.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -154,6 +161,24 @@ export default class BattleScene extends Phaser.Scene {
 
     // ── Launch persistent UI overlay ────────────────────────────────────────
     this.scene.launch('UIScene');
+
+    // ── Voice-line subtitle system ───────────────────────────────────────────
+    this._subtitle = new VoiceSubtitle(this);
+
+    // Serhiy quip at wave start
+    this._showVoiceLine('serhiy', 'Сергій');
+
+    // Periodic Serhiy quips every ~25–40 s (randomised)
+    const scheduleQuip = () => {
+      const delay = Phaser.Math.Between(25000, 40000);
+      this._serhiyQuipTimer = this.time.delayedCall(delay, () => {
+        if (!this.gameOver && this.wave !== 10) {
+          this._showVoiceLine('serhiy', 'Сергій');
+        }
+        scheduleQuip();
+      });
+    };
+    scheduleQuip();
   }
 
   // ─── House Upgrade ────────────────────────────────────────────────────────
@@ -193,6 +218,19 @@ export default class BattleScene extends Phaser.Scene {
     }).setDepth(15);
     em.explode(40, this.house.x, this.house.y);
     this.time.delayedCall(1000, () => { if (em.active) em.destroy(); });
+  }
+
+  // ─── Voice-line helper ────────────────────────────────────────────────────
+
+  /**
+   * Display a subtitle for the given character key and speaker name.
+   * @param {string} characterKey  — key in VoiceLines (e.g. 'serhiy')
+   * @param {string} speakerName   — display name shown in the HUD
+   */
+  _showVoiceLine(characterKey, speakerName) {
+    if (!this._subtitle) return;
+    const line = randomLine(characterKey);
+    if (line) this._subtitle.show(speakerName, line.ua, line.en);
   }
 
   // ─── Defenders ────────────────────────────────────────────────────────────
@@ -295,6 +333,13 @@ export default class BattleScene extends Phaser.Scene {
     enemy.isBoss          = false;
     enemy.isAttackingWall = false;
     enemy.setDepth(4);
+
+    this.events.emit(SoundEvents.ENEMY_ZOMBIE_SPAWN, { enemy, type });
+
+    // Occasional zombie-clerk voice line on spawn
+    if (type === 'enemy_clerk' && Math.random() < 0.25) {
+      this._showVoiceLine('zombieClerk', 'Зомбі-клерк');
+    }
   }
 
   _spawnBoss() {
@@ -322,6 +367,9 @@ export default class BattleScene extends Phaser.Scene {
       0xff00aa, 0,
     ).setDepth(50);
     this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
+
+    this.events.emit(SoundEvents.BOSS_PHASE1_START, { boss });
+    this._showVoiceLine('miniVakhtersha', 'Міні-Вахтьорша');
   }
 
   // ─── Combat ───────────────────────────────────────────────────────────────
@@ -330,6 +378,8 @@ export default class BattleScene extends Phaser.Scene {
     if (!enemy.active) return;
     enemy.body.setVelocityX(0);
     enemy.isAttackingWall = true;
+    const evt = enemy.isBoss ? SoundEvents.BOSS_ATTACK : SoundEvents.ENEMY_ZOMBIE_ATTACK;
+    this.events.emit(evt, { enemy });
   }
 
   _hitEnemy(proj, enemy) {
@@ -337,6 +387,7 @@ export default class BattleScene extends Phaser.Scene {
     const damage = Math.floor(20 * this.modifiers.damage);
     enemy.hp -= damage;
     this._spawnHitParticle(proj.x, proj.y);
+    this.events.emit(SoundEvents.FX_HIT, { x: proj.x, y: proj.y });
     if (proj.particleTrail) {
       proj.particleTrail.stopFollow();
       this.time.delayedCall(260, () => {
@@ -353,6 +404,7 @@ export default class BattleScene extends Phaser.Scene {
   _killEnemy(enemy) {
     this.money += 20;
     this._spawnDeathExplosion(enemy.x, enemy.y);
+    this.events.emit(SoundEvents.FX_EXPLOSION, { x: enemy.x, y: enemy.y });
     const wasBoss = enemy.isBoss;
     enemy.destroy();
 
@@ -363,6 +415,7 @@ export default class BattleScene extends Phaser.Scene {
       // Reset BGM rate
       const bgm = this.sound.get('bgm');
       if (bgm) bgm.setRate(1.0);
+      this.events.emit(SoundEvents.BOSS_DEATH);
       this._endWave();
     }
   }
@@ -423,6 +476,9 @@ export default class BattleScene extends Phaser.Scene {
     const spd   = 460;
     proj.body.setVelocity(Math.cos(angle) * spd, Math.sin(angle) * spd);
 
+    this.events.emit(SoundEvents.PLAYER_SHOOT, { x: defender.x, y: defender.y });
+    this.events.emit(SoundEvents.FX_BULLET,    { x: proj.x, y: proj.y });
+
     // Neon pink/orange additive particle trail
     const trail = this.add.particles(proj.x, proj.y, 'particle_neon_orange', {
       speed:     { min: 8, max: 40 },
@@ -471,6 +527,7 @@ export default class BattleScene extends Phaser.Scene {
       if (!enemy.active || !enemy.isAttackingWall) continue;
       const dps = enemy.isBoss ? 2.0 : 0.5;
       this.houseHP -= dps * defenseInv;
+      this.events.emit(SoundEvents.PLAYER_DAMAGE, { dps });
     }
 
     // Wave timer bar (neon style)
@@ -558,9 +615,11 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Game Over ────────────────────────────────────────────────────────────
 
   _triggerGameOver() {
-    if (this._spawnTimer)   this._spawnTimer.remove();
-    if (this._waveEndTimer) this._waveEndTimer.remove();
+    if (this._spawnTimer)       this._spawnTimer.remove();
+    if (this._waveEndTimer)     this._waveEndTimer.remove();
+    if (this._serhiyQuipTimer)  this._serhiyQuipTimer.remove();
     this._passiveTimer.remove();
+    if (this._subtitle)         this._subtitle.destroy();
 
     // Reset BGM rate
     const bgm = this.sound.get('bgm');
