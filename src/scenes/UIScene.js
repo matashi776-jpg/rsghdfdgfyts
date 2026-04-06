@@ -3,7 +3,9 @@
  * HUD overlay — Оборона Ланчина V4.0 NEON PSYCHEDELIC
  * Displays: "Рівень: [X] | Неон: [₴] | Час: [Y] сек", upgrade button,
  * and boss bar "КІБЕР-БОС: ТОВАРИШ ВАХТЕРША". All text is glowing neon.
+ * Part 8.5: Uses Locale for all displayed strings.
  */
+import Locale from '../utils/Locale.js';
 export default class UIScene extends Phaser.Scene {
   constructor() {
     super({ key: 'UIScene' });
@@ -92,14 +94,14 @@ export default class UIScene extends Phaser.Scene {
 
     const secLeft = Math.max(0, Math.ceil(80 - this._elapsedSec));
 
-    // Top status line: "Рівень: X | Неон: ₴ | Час: Y сек"
+    // Top status line: localized
     this._statusTxt.setText(
-      `Рівень: ${battle.wave}  |  Неон: ₴${battle.money}  |  Час: ${secLeft} сек`,
+      Locale.t('status_line', battle.wave, battle.money, secLeft),
     );
 
     // Boss bar label (wave 10)
     if (battle.wave === 10 && battle.bossActive) {
-      this._bossLabelTxt.setVisible(true).setText('КІБЕР-БОС: ТОВАРИШ ВАХТЕРША');
+      this._bossLabelTxt.setVisible(true).setText(Locale.t('boss_title'));
     } else {
       this._bossLabelTxt.setVisible(false);
     }
@@ -107,13 +109,13 @@ export default class UIScene extends Phaser.Scene {
     // Upgrade button
     const lvl  = battle.houseLevel;
     const cost = this._upgradeCost(lvl);
-    const tierNames = ['', 'Затишна Хата', 'Цегляний Дім', 'КІБЕР-ФОРТЕЦЯ'];
+    const tierNames = ['', Locale.t('house_t1'), Locale.t('house_t2'), Locale.t('house_t3')];
     if (lvl >= 3) {
-      this._upgradeBtn.setText(`🏰 ${tierNames[3]} — МАКСИМУМ`).setColor('#ff00ff');
+      this._upgradeBtn.setText(`🏰 ${tierNames[3]} — ${Locale.t('max_level')}`).setColor('#ff00ff');
     } else {
       const canAfford = battle.money >= cost;
       this._upgradeBtn
-        .setText(`⬆ Покращити: ${tierNames[lvl + 1]} (${cost} ₴)`)
+        .setText(`${Locale.t('upgrade_btn')}: ${tierNames[lvl + 1]} (${cost} ₴)`)
         .setColor(canAfford ? '#00ffff' : '#ff4466');
     }
   }

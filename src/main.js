@@ -9,6 +9,8 @@ import StoryScene from './scenes/StoryScene.js';
 import BattleScene from './scenes/BattleScene.js';
 import UIScene from './scenes/UIScene.js';
 import PerkScene from './scenes/PerkScene.js';
+import CutsceneScene from './scenes/CutsceneScene.js';
+import ComicScene from './scenes/ComicScene.js';
 
 const config = {
   type: Phaser.WEBGL,
@@ -26,7 +28,7 @@ const config = {
     width: 1280,
     height: 720,
   },
-  scene: [PreloadScene, MenuScene, StoryScene, BattleScene, UIScene, PerkScene],
+  scene: [PreloadScene, MenuScene, StoryScene, BattleScene, UIScene, PerkScene, CutsceneScene, ComicScene],
 };
 
 new Phaser.Game(config);

@@ -9,7 +9,15 @@
  *  - Neon projectile trails (pink/orange additive particles)
  *  - House tiers with gameplay bonuses
  *  - Neon visual style throughout
+ *
+ * Part 8.5 additions:
+ *  - Locale used for all displayed strings
+ *  - Boss entrance CutsceneScene before wave 10
+ *  - Boss phase 2 at 50% HP (speed + visual change)
+ *  - Comic panel (ComicScene) after wave 1
+ *  - NPC decorative sprites (Babtsya Healer, Mykhas Mechanic)
  */
+import Locale from '../utils/Locale.js';
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -100,7 +108,7 @@ export default class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setDepth(10);
 
     // Boss HP label
-    this._bossTitleTxt = this.add.text(width / 2, 10, 'КІБЕР-БОС: ТОВАРИШ ВАХТЕРША', {
+    this._bossTitleTxt = this.add.text(width / 2, 10, Locale.t('boss_title'), {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '16px',
       color:      '#ff00ff',
@@ -118,7 +126,7 @@ export default class BattleScene extends Phaser.Scene {
     }).setDepth(10);
 
     // Game-over text
-    this._gameOverTxt = this.add.text(width / 2, height / 2, 'ХУТІР ВПАВ!', {
+    this._gameOverTxt = this.add.text(width / 2, height / 2, Locale.t('fx_game_over'), {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '72px',
       color:      '#ff00ff',
@@ -148,6 +156,9 @@ export default class BattleScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+
+    // ── NPC decorative sprites ────────────────────────────────────────────────
+    this._spawnNPCs();
 
     // ── Start first wave ────────────────────────────────────────────────────
     this._startWave();
@@ -215,17 +226,59 @@ export default class BattleScene extends Phaser.Scene {
     }
   }
 
-  // ─── Wave Management ──────────────────────────────────────────────────────
+  // ─── NPC Decorative Sprites ───────────────────────────────────────────────
+
+  _spawnNPCs() {
+    const { height } = this.scale;
+
+    // Babtsya Healer — behind the house, lower-left corner
+    const babtsya = this.add.image(56, height - 64, 'npc_babtsya_healer')
+      .setDisplaySize(48, 76)
+      .setDepth(3)
+      .setTint(0xff88cc);
+    this.tweens.add({
+      targets:  babtsya,
+      y:        babtsya.y - 6,
+      duration: 1600,
+      yoyo:     true,
+      repeat:   -1,
+      ease:     'Sine.easeInOut',
+    });
+
+    // Mykhas Mechanic — behind defenders, upper-left corner
+    const mykhas = this.add.image(56, 64, 'npc_mykhas_mechanic')
+      .setDisplaySize(48, 76)
+      .setDepth(3)
+      .setTint(0x88aaff);
+    this.tweens.add({
+      targets:  mykhas,
+      y:        mykhas.y + 6,
+      duration: 1400,
+      yoyo:     true,
+      repeat:   -1,
+      ease:     'Sine.easeInOut',
+    });
+  }
+
+
 
   _startWave() {
     this.waveActive   = true;
     this._waveElapsed = 0;
-    this._waveLabelTxt.setText(`Хвиля: ${this.wave}`);
+    this._waveLabelTxt.setText(Locale.t('wave_label', this.wave));
 
     if (this.wave === 10) {
-      this._spawnBoss();
-      this._spawnTimer   = null;
-      this._waveEndTimer = null;
+      // Show boss entrance cutscene before spawning the boss
+      this.scene.pause('BattleScene');
+      this.scene.launch('CutsceneScene', {
+        type: 'boss_entrance',
+        onComplete: () => {
+          this.scene.resume('BattleScene');
+          this._spawnBoss();
+          this._spawnTimer   = null;
+          this._waveEndTimer = null;
+        },
+      });
     } else {
       const interval = Math.max(500, 2000 - this.wave * 100);
       this._spawnTimer = this.time.addEvent({
@@ -249,6 +302,25 @@ export default class BattleScene extends Phaser.Scene {
     this.waveActive = false;
     if (this._spawnTimer)   { this._spawnTimer.remove();   this._spawnTimer   = null; }
     if (this._waveEndTimer) { this._waveEndTimer.remove(); this._waveEndTimer = null; }
+
+    // After wave 1 — show comic panel interlude
+    if (this.wave === 1) {
+      this.scene.pause('BattleScene');
+      this.scene.launch('ComicScene', {
+        panel: 'comic_panel_01',
+        onComplete: () => {
+          this.scene.resume('BattleScene');
+          if (this.wave === 5 || this.wave === 10) {
+            this.scene.pause();
+            this.scene.launch('PerkScene', { modifiers: this.modifiers, wave: this.wave });
+          } else {
+            this.wave++;
+            this._startWave();
+          }
+        },
+      });
+      return;
+    }
 
     if (this.wave === 5 || this.wave === 10) {
       this.scene.pause();
@@ -345,6 +417,12 @@ export default class BattleScene extends Phaser.Scene {
     }
     proj.destroy();
 
+    // Boss phase 2 trigger at 50% HP
+    if (enemy.isBoss && !enemy.phase2Triggered && enemy.hp <= enemy.maxHp * 0.5) {
+      enemy.phase2Triggered = true;
+      this._triggerBossPhase2(enemy);
+    }
+
     if (enemy.hp <= 0) {
       this._killEnemy(enemy);
     }
@@ -368,6 +446,48 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   // ─── VFX — Neon Particle Manager ─────────────────────────────────────────
+
+  _triggerBossPhase2(boss) {
+    const { width, height } = this.scale;
+
+    // Tint change: Ultra-Violet crack visual
+    boss.setTint(0xcc00ff);
+    // Speed increase for phase 2
+    boss.body.setVelocityX(-30);
+
+    // Phase 2 notification banner
+    const banner = this.add.text(width / 2, height / 2, Locale.t('boss_phase2'), {
+      fontFamily:      'Arial Black, Arial',
+      fontSize:        '52px',
+      color:           '#cc44ff',
+      stroke:          '#000000',
+      strokeThickness: 10,
+      shadow: { offsetX: 0, offsetY: 0, color: '#cc44ff', blur: 40, fill: true },
+    }).setOrigin(0.5).setDepth(45).setAlpha(0);
+
+    this.tweens.add({
+      targets:  banner,
+      alpha:    1,
+      scaleX:   1.1,
+      scaleY:   1.1,
+      duration: 340,
+      yoyo:     true,
+      repeat:   2,
+      onComplete: () => { if (banner.active) banner.destroy(); },
+    });
+
+    // Ultra-Violet glitch flash
+    const flash = this.add.rectangle(width / 2, height / 2, width, height, 0x8800ff, 0).setDepth(48);
+    this.tweens.add({ targets: flash, fillAlpha: 0.5, duration: 130, yoyo: true, repeat: 3,
+      onComplete: () => { if (flash.active) flash.destroy(); },
+    });
+
+    // BGM rate increase for phase 2 intensity
+    const bgm = this.sound.get('bgm');
+    if (bgm) bgm.setRate(1.45);
+
+    this.cameras.main.shake(800, 0.022);
+  }
 
   _spawnDeathExplosion(x, y) {
     const emitter = this.add.particles(x, y, 'particle_neon_pink', {
@@ -519,7 +639,7 @@ export default class BattleScene extends Phaser.Scene {
     this._hpGfx.lineStyle(2, 0x00ffff, 0.9);
     this._hpGfx.strokeRect(80, 680, 180, 22);
     const hp = Math.max(0, Math.ceil(this.houseHP));
-    this._houseHpLabel.setText(`Хутір: ${hp} / ${this.houseMaxHP}`);
+    this._houseHpLabel.setText(Locale.t('house_hp', hp, this.houseMaxHP));
   }
 
   _drawEnemyHpBars() {

@@ -2,6 +2,8 @@
  * MenuScene.js
  * Main menu for Castle Defense.
  */
+import Locale from '../utils/Locale.js';
+
 export default class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
@@ -32,8 +34,8 @@ export default class MenuScene extends Phaser.Scene {
       .setStroke('#000000', 8)
       .setShadow(4, 4, '#ff0000', 0, true, true);
 
-    // Start button
-    const btn = this.add.text(width / 2, height * 0.58, 'РОЗПОЧАТИ КАМПАНІЮ', {
+    // Start button — uses Locale
+    const btn = this.add.text(width / 2, height * 0.58, Locale.t('start') + ' — РОЗПОЧАТИ КАМПАНІЮ', {
       fontFamily: 'Arial Black, Arial',
       fontSize: '32px',
       color: '#ffee00',

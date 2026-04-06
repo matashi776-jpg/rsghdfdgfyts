@@ -9,12 +9,14 @@
  *   - Кислотний Буряк  — bullet damage ×1.5 + acid splash (extra AOE damage)
  *
  * All text is glowing neon (Cyan / Magenta).
+ * Part 8.5: Uses Locale for perk names, descriptions and UI labels.
  */
+import Locale from '../utils/Locale.js';
 
 const ALL_PERKS = [
   {
-    name:      'Золотий Талон',
-    desc:      '💰 Пасивний прибуток ×2\n(Нео-монети течуть самі!)',
+    get name()  { return Locale.t('perk_coupon'); },
+    get desc()  { return Locale.t('perk_coupon_desc'); },
     color:     0x2a1a00,
     accent:    0xffcc00,
     textColor: '#ffdd44',
@@ -22,8 +24,8 @@ const ALL_PERKS = [
     effect: (mod) => { mod.passiveIncome *= 2; },
   },
   {
-    name:      'Техно-Печатка',
-    desc:      '🛡 Хутір отримує на 30% менше шкоди\n(Нано-щит активовано!)',
+    get name()  { return Locale.t('perk_seal'); },
+    get desc()  { return Locale.t('perk_seal_desc'); },
     color:     0x001a33,
     accent:    0x00ffff,
     textColor: '#00ffff',
@@ -33,8 +35,8 @@ const ALL_PERKS = [
     effect: (mod) => { mod.wallDefense *= (1 / 0.7); },
   },
   {
-    name:      'Кислотний Буряк',
-    desc:      '⚗ Шкода кулі ×1.5\n+ Кислотний сплеск (AOE)',
+    get name()  { return Locale.t('perk_beet'); },
+    get desc()  { return Locale.t('perk_beet_desc'); },
     color:     0x1a0022,
     accent:    0xff00aa,
     textColor: '#ff44ff',
@@ -45,8 +47,8 @@ const ALL_PERKS = [
     },
   },
   {
-    name:      'Козацький Драйв',
-    desc:      '⚡ Швидкість атаки +30%\n(Сергій в кайфі!)',
+    get name()  { return Locale.t('perk_drive'); },
+    get desc()  { return Locale.t('perk_drive_desc'); },
     color:     0x001122,
     accent:    0x4488ff,
     textColor: '#88aaff',
@@ -85,7 +87,7 @@ export default class PerkScene extends Phaser.Scene {
     grid.strokePath();
 
     // Title — neon cyan
-    this.add.text(width / 2, height * 0.10, `Хвиля ${this.wave} завершена!`, {
+    this.add.text(width / 2, height * 0.10, Locale.t('wave_complete', this.wave), {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '36px',
       color:      '#00ffff',
@@ -94,7 +96,7 @@ export default class PerkScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 22, fill: true },
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height * 0.20, 'ОБЕРИ ЗДІБНІСТЬ:', {
+    this.add.text(width / 2, height * 0.20, Locale.t('choose_perk'), {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '26px',
       color:      '#ff00ff',
@@ -150,7 +152,7 @@ export default class PerkScene extends Phaser.Scene {
     container.add(descTxt);
 
     // "Обрати" label
-    const pickTxt = this.add.text(0, h / 2 - 38, 'ОБРАТИ', {
+    const pickTxt = this.add.text(0, h / 2 - 38, Locale.t('pick'), {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '18px',
       color:      perk.textColor,
