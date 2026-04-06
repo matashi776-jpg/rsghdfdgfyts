@@ -1,15 +1,25 @@
 /**
  * BattleScene.js
- * Dynamic battle engine — Оборона Ланчина V4.0 NEON PSYCHEDELIC
+ * Dynamic battle engine — Acid Khutir V5.0 NEON PSYCHEDELIC CYBER-FOLK
  *
- * Changes from V3:
- *  - Wave duration: 80 s (was 60 s)
- *  - Enemy scaling: +30% HP and +10% speed per wave
- *  - Boss appearance: bgm.setRate(1.2)
- *  - Neon projectile trails (pink/orange additive particles)
- *  - House tiers with gameplay bonuses
- *  - Neon visual style throughout
+ * Art Bible palette:
+ *   Electric Blue  #00CFFF — bullets, energy, UI
+ *   Neon Pink      #FF00D4 — enemies, flashes, blood
+ *   Toxic Green    #39FF14 — poison, beet, effects
+ *   Ultra-Violet   #7F00FF — backgrounds, shadows, magic
+ *   Cyber-Amber    #FFB300 — gold, money
+ *   Plasma Red     #FF0033 — damage, crits
+ *   Deep Indigo    #0A0014 — background, contrast
+ *
+ * Enemy Bible types:
+ *   zombie_clerk  — tall thin, papers fly on hit
+ *   archivarius   — square massive, paper-rain death
+ *   inspector     — stamps every 3s → slows defenders
+ *   tank_babtsia  — round, shoots varenyky
+ *   boss          — Comrade Vakhtersha (3-phase)
  */
+import FXManager, { PALETTE } from '../FXManager.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -42,24 +52,28 @@ export default class BattleScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // Neon-tinted background
+    // ── FX Manager (Art Bible / FX System) ──────────────────────────────────
+    this.fx = new FXManager(this);
+
+    // Deep Indigo background with Ultra-Violet tint
     this.add.image(width / 2, height / 2, 'bg')
       .setDisplaySize(width, height)
-      .setTint(0x8800ff);
+      .setTint(0x7F00FF);
 
     // Scanline overlay for cyber feel
     const scanlines = this.add.graphics().setAlpha(0.07).setDepth(1);
     for (let y = 0; y < height; y += 4) {
-      scanlines.lineStyle(1, 0x00ffff, 1);
+      scanlines.lineStyle(1, 0x00CFFF, 1);
       scanlines.moveTo(0, y);
       scanlines.lineTo(width, y);
     }
     scanlines.strokePath();
 
-    // ── The Wall (House) ────────────────────────────────────────────────────
+    // ── The Wall (House / Khata) ─────────────────────────────────────────────
+    // Level 1 — Традиція: warm amber glow
     this.house = this.physics.add.staticImage(150, 360, 'house_1');
     this.house.setDisplaySize(100, 200);
-    this.house.setTint(0xff88ff);
+    this.house.setTint(0xFFB300); // Cyber-Amber warm glow
     this.house.refreshBody();
 
     // ── Physics groups ──────────────────────────────────────────────────────
@@ -139,10 +153,10 @@ export default class BattleScene extends Phaser.Scene {
       },
     });
 
-    // ── Neon pulse on house (breathing glow) ─────────────────────────────────
+    // ── Neon pulse on house (breathing UV glow — pysanka runes pulsing) ─────
     this.tweens.add({
       targets: this.house,
-      alpha: 0.8,
+      alpha: 0.75,
       duration: 900,
       yoyo: true,
       repeat: -1,
@@ -156,7 +170,7 @@ export default class BattleScene extends Phaser.Scene {
     this.scene.launch('UIScene');
   }
 
-  // ─── House Upgrade ────────────────────────────────────────────────────────
+  // ─── House Upgrade (Khata Levels — Art Bible) ────────────────────────────
 
   upgradeHouse() {
     if (this.houseLevel >= 3) return;
@@ -164,38 +178,67 @@ export default class BattleScene extends Phaser.Scene {
     this.house.setTexture('house_' + this.houseLevel);
 
     if (this.houseLevel === 2) {
+      // Level 2 — Укріплення: Electric Blue neon geometric patterns
       this.houseMaxHP = 5000;
-      this.house.setTint(0x00ffff); // Brick house — cyan neon
+      this.house.setTint(0x00CFFF); // Electric Blue
+      // Spawn neon geometric ornament ring
+      this._spawnHouseAura(0x00CFFF);
     } else if (this.houseLevel === 3) {
+      // Level 3 — Кібер-Січ: pink dome, anti-gravity, auto-turret Борщ-Лазер
       this.houseMaxHP = 12000;
-      this.house.setTint(0xff00aa); // Cyber-Fortress — neon pink
-      // Lvl 3 bonus: unlock Auto-Turret (faster fire)
+      this.house.setTint(0xFF00D4); // Neon Pink dome
+      // Hover tween — house floats above ground
+      this.tweens.add({
+        targets: this.house,
+        y: this.house.y - 18,
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
       this.modifiers.attackSpeed = Math.max(0.1, this.modifiers.attackSpeed - 0.35);
-      this._spawnUpgradeParticles();
+      this._spawnHouseAura(0xFF00D4);
     }
+
     this.houseHP = this.houseMaxHP;
 
     const newW = 100 + (this.houseLevel - 1) * 10;
     const newH = 200 + (this.houseLevel - 1) * 20;
     this.house.setDisplaySize(newW, newH);
     this.house.refreshBody();
+
+    // Upgrade burst FX
+    if (this.fx) {
+      this.fx.spawnUpgradeBurst(this.house.x, this.house.y);
+    } else {
+      this._spawnUpgradeParticles();
+    }
   }
 
-  _spawnUpgradeParticles() {
-    const em = this.add.particles(this.house.x, this.house.y, 'particle_neon_cyan', {
-      speed:    { min: 60, max: 300 },
-      scale:    { start: 1.6, end: 0 },
-      alpha:    { start: 1, end: 0 },
-      lifespan: { min: 400, max: 900 },
-      angle:    { min: 0, max: 360 },
-      tint:     [0x00ffff, 0xff00aa, 0xffff00],
-      emitting: false,
-    }).setDepth(15);
-    em.explode(40, this.house.x, this.house.y);
-    this.time.delayedCall(1000, () => { if (em.active) em.destroy(); });
+  /**
+   * Spawn a pulsing aura ring around the house for levels 2–3.
+   */
+  _spawnHouseAura(color) {
+    const aura = this.add.graphics().setDepth(4);
+    const drawAura = (alpha) => {
+      aura.clear();
+      aura.lineStyle(3, color, alpha);
+      aura.strokeCircle(this.house.x, this.house.y, 80 + (this.houseLevel - 1) * 20);
+    };
+    drawAura(0.6);
+    const glowObj = { v: 0.6 };
+    this.tweens.add({
+      targets: glowObj,
+      v: 0.15,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => drawAura(glowObj.v),
+    });
   }
 
-  // ─── Defenders ────────────────────────────────────────────────────────────
+  // ─── Defenders (Сергій — glowing vyshyvanka) ─────────────────────────────
 
   _createDefenders() {
     const positions = [
@@ -208,9 +251,18 @@ export default class BattleScene extends Phaser.Scene {
     for (const pos of positions) {
       const s = this.add.image(pos.x, pos.y, 'sergiy')
         .setDisplaySize(48, 72)
-        .setTint(0xff88ff)
+        .setTint(0xFF00D4) // Neon Pink — glowing vyshyvanka
         .setDepth(5);
       s.fireTimer = 0;
+      // UV-reactive breathing pulse
+      this.tweens.add({
+        targets: s,
+        alpha: { from: 1.0, to: 0.8 },
+        duration: 700 + Math.random() * 300,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
       this.defendersGroup.add(s);
     }
   }
@@ -266,24 +318,36 @@ export default class BattleScene extends Phaser.Scene {
 
   // ─── Enemy Spawning ───────────────────────────────────────────────────────
 
+  // ─── Enemy Spawning (Enemy Bible types) ──────────────────────────────────
+
   _spawnEnemy() {
     if (this.gameOver) return;
     const { height } = this.scale;
     const roll = Math.random();
+
+    // Enemy Bible dispatch:
+    //   50%  zombie_clerk   — tall, thin, papers fly on hit
+    //   18%  archivarius    — slow, massive, paper death explosion
+    //   17%  enemy_runner   — fast runner
+    //   10%  inspector      — stamps every 3s → slows fire
+    //   5%   tank_babtsia   — round, shoots varenyky
     let type, baseSpeed, hpMult, dispW, dispH, tint;
 
-    if (roll < 0.5) {
-      type = 'enemy_clerk'; baseSpeed = 60; hpMult = 1.0; dispW = 48; dispH = 64; tint = 0xaa44ff;
-    } else if (roll < 0.80) {
-      type = 'enemy_runner'; baseSpeed = 120; hpMult = 0.7; dispW = 40; dispH = 56; tint = 0xff6600;
+    if (roll < 0.50) {
+      type = 'enemy_clerk'; baseSpeed = 60;  hpMult = 1.0; dispW = 28; dispH = 64; tint = 0xFF00D4; // Neon Pink
+    } else if (roll < 0.68) {
+      type = 'enemy_archivarius'; baseSpeed = 28; hpMult = 3.5; dispW = 56; dispH = 56; tint = 0xFFB300; // Cyber-Amber
+    } else if (roll < 0.85) {
+      type = 'enemy_runner'; baseSpeed = 130; hpMult = 0.65; dispW = 40; dispH = 56; tint = 0xFF0033; // Plasma Red
+    } else if (roll < 0.95) {
+      type = 'enemy_inspector'; baseSpeed = 50; hpMult = 1.4; dispW = 44; dispH = 60; tint = 0x7F00FF; // Ultra-Violet
     } else {
-      type = 'enemy_tank'; baseSpeed = 30; hpMult = 3.0; dispW = 80; dispH = 80; tint = 0x00ff44;
+      type = 'enemy_tank'; baseSpeed = 28; hpMult = 3.2; dispW = 80; dispH = 80; tint = 0x39FF14; // Toxic Green
     }
 
     // +10% speed per wave (wave starts at 1)
     const speed = baseSpeed * (1 + (this.wave - 1) * 0.10);
-
-    const y     = Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
+    const y = Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
     const enemy = this.enemiesGroup.create(1340, y, type);
     enemy.setDisplaySize(dispW, dispH);
     enemy.setTint(tint);
@@ -294,34 +358,117 @@ export default class BattleScene extends Phaser.Scene {
     enemy.hp              = enemy.maxHp;
     enemy.isBoss          = false;
     enemy.isAttackingWall = false;
+    enemy.enemyType       = type;
     enemy.setDepth(4);
+
+    // Inspector: stamp timer that triggers stamp slam every 3s
+    if (type === 'enemy_inspector') {
+      this.time.addEvent({
+        delay: 3000,
+        loop:  true,
+        callbackScope: this,
+        callback: () => {
+          if (!enemy.active) return;
+          if (this.fx) this.fx.spawnStampSlam(enemy.x, enemy.y + dispH / 2);
+          // Slow defenders briefly
+          this._applyStampSlow();
+        },
+      });
+    }
   }
 
   _spawnBoss() {
     const { height } = this.scale;
     const boss = this.enemiesGroup.create(1200, height / 2, 'boss_vakhtersha');
     boss.setDisplaySize(120, 140);
-    boss.setTint(0xff00ff);
+    boss.setTint(0xFF00D4); // Neon Pink — Vakhtersha
     boss.body.setVelocityX(-15);
     boss.maxHp           = 15000;
     boss.hp              = 15000;
     boss.isBoss          = true;
     boss.isAttackingWall = false;
+    boss.enemyType       = 'boss';
+    boss._phase          = 1;
     boss.setDepth(6);
     this.bossActive = true;
     this._bossTitleTxt.setVisible(true);
 
-    // Boss arrival: speed up BGM
+    // Boss arrival: speed up BGM + FX burst
     const bgm = this.sound.get('bgm');
     if (bgm) bgm.setRate(1.2);
 
-    // Flash screen neon pink
-    const flash = this.add.rectangle(
-      this.scale.width / 2, this.scale.height / 2,
-      this.scale.width, this.scale.height,
-      0xff00aa, 0,
-    ).setDepth(50);
-    this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
+    if (this.fx) {
+      this.fx.spawnBossArrival(boss.x, boss.y);
+    } else {
+      const flash = this.add.rectangle(
+        this.scale.width / 2, this.scale.height / 2,
+        this.scale.width, this.scale.height,
+        0xFF00D4, 0,
+      ).setDepth(50);
+      this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
+    }
+
+    // Boss phase timer — every 8s activate a phase ability
+    this._bossPhaseTimer = this.time.addEvent({
+      delay: 8000,
+      loop:  true,
+      callbackScope: this,
+      callback: () => this._bossPhaseAbility(boss),
+    });
+  }
+
+  /**
+   * Comrade Vakhtersha — 3-phase abilities.
+   * Phase 1 — Перевірка документів: fires stamps (stamp slam FX).
+   * Phase 2 — Виклик підкріплення: spawns 3 clerks.
+   * Phase 3 (<25% HP) — Кипяток-овердрайв: speed ×2, Toxic Green tint.
+   */
+  _bossPhaseAbility(boss) {
+    if (!boss || !boss.active || !this.bossActive) return;
+    const ratio = boss.hp / boss.maxHp;
+
+    // Transition to phase 3 at 25% HP
+    if (ratio < 0.25 && boss._phase < 3) {
+      boss._phase = 3;
+      boss.body.setVelocityX(-30); // speed ×2
+      boss.setTint(0x39FF14); // Toxic Green
+      if (this.fx) this.fx.spawnPoisonCloud(boss.x, boss.y, 60);
+    } else if (ratio < 0.55 && boss._phase < 2) {
+      boss._phase = 2;
+    }
+
+    if (boss._phase === 1) {
+      // Phase 1: stamp slam
+      if (this.fx) this.fx.spawnStampSlam(boss.x - 60, boss.y + 30);
+      this._applyStampSlow();
+    } else if (boss._phase === 2) {
+      // Phase 2: spawn 2 clerks
+      for (let i = 0; i < 2; i++) {
+        const { height } = this.scale;
+        const y = Phaser.Math.Between(Math.floor(height * 0.2), Math.floor(height * 0.8));
+        const clerk = this.enemiesGroup.create(boss.x + 60 + i * 40, y, 'enemy_clerk');
+        clerk.setDisplaySize(28, 64);
+        clerk.setTint(0xFF00D4);
+        clerk.body.setVelocityX(-70);
+        clerk.maxHp = Math.round(this.baseEnemyHP * 1.5);
+        clerk.hp    = clerk.maxHp;
+        clerk.isBoss = false;
+        clerk.isAttackingWall = false;
+        clerk.enemyType = 'enemy_clerk';
+        clerk.setDepth(4);
+      }
+    }
+  }
+
+  /**
+   * Inspector stamp mechanic — briefly slows defender fire rate.
+   */
+  _applyStampSlow() {
+    const origSpeed = this.modifiers.attackSpeed;
+    this.modifiers.attackSpeed = Math.min(origSpeed * 1.6, 2.0);
+    this.time.delayedCall(2000, () => {
+      this.modifiers.attackSpeed = origSpeed;
+    });
   }
 
   // ─── Combat ───────────────────────────────────────────────────────────────
@@ -336,7 +483,21 @@ export default class BattleScene extends Phaser.Scene {
     if (!proj.active || !enemy.active) return;
     const damage = Math.floor(20 * this.modifiers.damage);
     enemy.hp -= damage;
-    this._spawnHitParticle(proj.x, proj.y);
+
+    // Hit spark FX (Electric Blue spark on impact)
+    if (this.fx) {
+      this.fx.spawnHitSpark(proj.x, proj.y);
+    } else {
+      this._spawnHitParticle(proj.x, proj.y);
+    }
+
+    // Paper burst on clerks/archivarius hit
+    if (enemy.enemyType === 'enemy_clerk' || enemy.enemyType === 'enemy_archivarius') {
+      if (this.fx && Math.random() < 0.5) {
+        this.fx.spawnPaperShower(proj.x, proj.y);
+      }
+    }
+
     if (proj.particleTrail) {
       proj.particleTrail.stopFollow();
       this.time.delayedCall(260, () => {
@@ -352,22 +513,35 @@ export default class BattleScene extends Phaser.Scene {
 
   _killEnemy(enemy) {
     this.money += 20;
-    this._spawnDeathExplosion(enemy.x, enemy.y);
+    const ex = enemy.x;
+    const ey = enemy.y;
     const wasBoss = enemy.isBoss;
+    const type = enemy.enemyType;
     enemy.destroy();
+
+    // Death FX from Art Bible
+    if (this.fx) {
+      this.fx.spawnDeathExplosion(ex, ey);
+      // Paper rain for archivarius / clerk
+      if (type === 'enemy_archivarius' || type === 'enemy_clerk') {
+        this.fx.spawnPaperShower(ex, ey);
+      }
+    } else {
+      this._spawnDeathExplosion(ex, ey);
+    }
 
     if (wasBoss) {
       this.bossActive = false;
       this._bossTitleTxt.setVisible(false);
       this._bossBarGfx.clear();
-      // Reset BGM rate
+      if (this._bossPhaseTimer) { this._bossPhaseTimer.remove(); this._bossPhaseTimer = null; }
       const bgm = this.sound.get('bgm');
       if (bgm) bgm.setRate(1.0);
       this._endWave();
     }
   }
 
-  // ─── VFX — Neon Particle Manager ─────────────────────────────────────────
+  // ─── VFX — legacy fallbacks (used when FXManager unavailable) ────────────
 
   _spawnDeathExplosion(x, y) {
     const emitter = this.add.particles(x, y, 'particle_neon_pink', {
@@ -376,7 +550,7 @@ export default class BattleScene extends Phaser.Scene {
       alpha:    { start: 1, end: 0 },
       lifespan: { min: 300, max: 700 },
       angle:    { min: 0, max: 360 },
-      tint:     [0xff00aa, 0xff6600, 0xffff00, 0x00ffff],
+      tint:     [0xFF00D4, 0xFFB300, 0x39FF14, 0x00CFFF],
       emitting: false,
     }).setDepth(15);
     emitter.explode(30, x, y);
@@ -384,20 +558,20 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _spawnHitParticle(x, y) {
-    const emitter = this.add.particles(x, y, 'particle_neon_orange', {
+    const emitter = this.add.particles(x, y, 'particle_electric', {
       speed:    { min: 30, max: 110 },
       scale:    { start: 0.9, end: 0 },
       alpha:    { start: 1, end: 0 },
       lifespan: 280,
       angle:    { min: 0, max: 360 },
-      tint:     [0xff6600, 0xffff00],
+      tint:     [0x00CFFF, 0xFFFFFF],
       emitting: false,
     }).setDepth(15);
     emitter.explode(10, x, y);
     this.time.delayedCall(400, () => { if (emitter.active) emitter.destroy(); });
   }
 
-  // ─── Defender Shooting ────────────────────────────────────────────────────
+  // ─── Defender Shooting (Electric Blue bullets — Art Bible) ───────────────
 
   _defenderShoot(defender) {
     const enemies = this.enemiesGroup.getChildren().filter((e) => e.active);
@@ -413,36 +587,47 @@ export default class BattleScene extends Phaser.Scene {
     }
     if (!target || minDist > 700 * 700) return;
 
-    const proj = this.projectilesGroup.create(defender.x + 22, defender.y, 'particle_neon_pink');
+    // Electric Blue bullet (Art Bible — bullets: Electric Blue #00CFFF with particle tail)
+    const proj = this.projectilesGroup.create(defender.x + 22, defender.y, 'particle_electric');
     if (!proj) return;
-    proj.setDisplaySize(16, 10);
+    proj.setDisplaySize(18, 8);
     proj.setDepth(6);
-    proj.setTint(0xff00aa);
+    proj.setTint(0x00CFFF); // Electric Blue
 
     const angle = Math.atan2(target.y - defender.y, target.x - defender.x);
-    const spd   = 460;
+    const spd   = 480;
     proj.body.setVelocity(Math.cos(angle) * spd, Math.sin(angle) * spd);
 
-    // Neon pink/orange additive particle trail
-    const trail = this.add.particles(proj.x, proj.y, 'particle_neon_orange', {
-      speed:     { min: 8, max: 40 },
-      scale:     { start: 0.7, end: 0 },
-      alpha:     { start: 0.9, end: 0 },
-      lifespan:  200,
-      frequency: 20,
-      quantity:  2,
-      tint:      [0xff00aa, 0xff6600],
-    }).setDepth(5);
-    trail.startFollow(proj);
-    proj.particleTrail = trail;
+    // Electric Smoke trail (Art Bible — Electric Smoke: particles linger, trail behind)
+    if (this.fx) {
+      const trail = this.fx.attachBulletTrail(proj);
+      proj.particleTrail = trail;
+    } else {
+      const trail = this.add.particles(proj.x, proj.y, 'particle_electric', {
+        speed:     { min: 5, max: 22 },
+        scale:     { start: 0.7, end: 0 },
+        alpha:     { start: 0.85, end: 0 },
+        lifespan:  { min: 160, max: 300 },
+        frequency: 18,
+        quantity:  2,
+        tint:      [0x00CFFF, 0xFFFFFF, 0x7F00FF],
+        blendMode: 'ADD',
+      }).setDepth(5);
+      trail.startFollow(proj);
+      proj.particleTrail = trail;
+    }
 
     this.time.delayedCall(2000, () => {
       if (proj.active) {
         if (proj.particleTrail && proj.particleTrail.active) {
-          proj.particleTrail.stopFollow();
-          this.time.delayedCall(260, () => {
-            if (proj.particleTrail && proj.particleTrail.active) proj.particleTrail.destroy();
-          });
+          if (this.fx) {
+            this.fx.stopBulletTrail(proj.particleTrail);
+          } else {
+            proj.particleTrail.stopFollow();
+            this.time.delayedCall(260, () => {
+              if (proj.particleTrail && proj.particleTrail.active) proj.particleTrail.destroy();
+            });
+          }
         }
         proj.destroy();
       }
@@ -473,16 +658,16 @@ export default class BattleScene extends Phaser.Scene {
       this.houseHP -= dps * defenseInv;
     }
 
-    // Wave timer bar (neon style)
+    // Wave timer bar (Ultra-Violet/Neon Pink neon style)
     if (this.waveActive && this.wave !== 10) {
       this._waveElapsed += delta;
       const ratio = Math.min(1, this._waveElapsed / this._waveDuration);
       this._timerGfx.clear();
-      this._timerGfx.fillStyle(0x110022, 0.7);
+      this._timerGfx.fillStyle(0x1A0030, 0.7);
       this._timerGfx.fillRect(width / 2 - 220, 38, 440, 10);
-      this._timerGfx.fillStyle(0xff00ff, 1);
+      this._timerGfx.fillStyle(0x7F00FF, 1); // Ultra-Violet
       this._timerGfx.fillRect(width / 2 - 220, 38, 440 * (1 - ratio), 10);
-      this._timerGfx.lineStyle(1, 0xff00ff, 0.6);
+      this._timerGfx.lineStyle(1, 0x00CFFF, 0.6); // Electric Blue border
       this._timerGfx.strokeRect(width / 2 - 220, 38, 440, 10);
     } else if (this.wave === 10) {
       this._timerGfx.clear();
@@ -506,17 +691,20 @@ export default class BattleScene extends Phaser.Scene {
     }
   }
 
-  // ─── HUD Drawing ──────────────────────────────────────────────────────────
+  // ─── HUD Drawing (Art Bible colors) ──────────────────────────────────────
 
   _drawHouseHpBar() {
     const ratio = Math.max(0, this.houseHP / this.houseMaxHP);
     this._hpGfx.clear();
-    this._hpGfx.fillStyle(0x110022, 1);
+    // Deep Indigo track
+    this._hpGfx.fillStyle(0x0A0014, 1);
     this._hpGfx.fillRect(80, 680, 180, 22);
-    const fillColor = ratio > 0.5 ? 0x00ffaa : ratio > 0.25 ? 0xffaa00 : 0xff00aa;
+    // Colour: Toxic Green → Cyber-Amber → Plasma Red
+    const fillColor = ratio > 0.5 ? 0x39FF14 : ratio > 0.25 ? 0xFFB300 : 0xFF0033;
     this._hpGfx.fillStyle(fillColor, 1);
     this._hpGfx.fillRect(80, 680, 180 * ratio, 22);
-    this._hpGfx.lineStyle(2, 0x00ffff, 0.9);
+    // Electric Blue border
+    this._hpGfx.lineStyle(2, 0x00CFFF, 0.9);
     this._hpGfx.strokeRect(80, 680, 180, 22);
     const hp = Math.max(0, Math.ceil(this.houseHP));
     this._houseHpLabel.setText(`Хутір: ${hp} / ${this.houseMaxHP}`);
@@ -530,9 +718,9 @@ export default class BattleScene extends Phaser.Scene {
       if (bw === 0) continue;
       const bx = enemy.x - bw / 2;
       const by = enemy.y - enemy.displayHeight / 2 - 9;
-      this._hpGfx.fillStyle(0x330022, 1);
+      this._hpGfx.fillStyle(0x200010, 1);
       this._hpGfx.fillRect(bx, by, bw, 5);
-      this._hpGfx.fillStyle(0x00ffaa, 1);
+      this._hpGfx.fillStyle(0x39FF14, 1); // Toxic Green enemy HP
       this._hpGfx.fillRect(bx, by, bw * r, 5);
     }
   }
@@ -544,14 +732,14 @@ export default class BattleScene extends Phaser.Scene {
     const ratio = Math.max(0, boss.hp / boss.maxHp);
     const barX  = 200;
     const barW  = width - 400;
-    // Pulsing pink boss bar
+    // Pulsing Neon Pink boss bar
     const pulse = 0.7 + 0.3 * Math.sin(this.time.now / 200);
     this._bossBarGfx.clear();
-    this._bossBarGfx.fillStyle(0x220033, 0.9);
+    this._bossBarGfx.fillStyle(0x1A0030, 0.9);
     this._bossBarGfx.fillRoundedRect(barX, 4, barW, 34, 7);
-    this._bossBarGfx.fillStyle(0xff00aa, pulse);
+    this._bossBarGfx.fillStyle(0xFF00D4, pulse); // Neon Pink
     this._bossBarGfx.fillRoundedRect(barX, 4, barW * ratio, 34, 7);
-    this._bossBarGfx.lineStyle(2, 0xff00ff, 0.9);
+    this._bossBarGfx.lineStyle(2, 0x00CFFF, 0.9); // Electric Blue border
     this._bossBarGfx.strokeRoundedRect(barX, 4, barW, 34, 7);
   }
 
