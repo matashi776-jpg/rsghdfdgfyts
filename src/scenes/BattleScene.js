@@ -56,7 +56,7 @@ export default class BattleScene extends Phaser.Scene {
   _buildEnvironment() {
     const { width, height } = this.scale;
 
-    // Background: image_1.png (Heroes 5 style), fallback to dark solid
+    // Background: image_2.png (rich 2D concept art), fallback to dark solid
     if (this.textures.exists('bg')) {
       this.add
         .image(width / 2, height / 2, 'bg')
