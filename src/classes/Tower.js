@@ -80,6 +80,17 @@ export default class Tower {
     if (this.scene.fireProjectile) {
       this.scene.fireProjectile(this, target);
     }
+    // Shoot pulse: briefly scale up the goose sprite
+    if (this.sprite && this.sprite.active) {
+      this.scene.tweens.add({
+        targets: this.sprite,
+        scaleX: 0.18,
+        scaleY: 0.18,
+        duration: 80,
+        yoyo: true,
+        ease: 'Sine.easeOut',
+      });
+    }
   }
 
   /**

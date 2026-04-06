@@ -181,19 +181,23 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _emitHitExplosion(x, y) {
-    // Spawn small red circles that spread and fade
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8;
-      const speed = Phaser.Math.Between(40, 100);
-      const p = this.add.circle(x, y, Phaser.Math.Between(3, 7), 0xcc2222, 1).setDepth(15);
+    // Borsch splash: red droplets that spread and fade
+    const count = 10;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + Phaser.Math.FloatBetween(-0.3, 0.3); // ±0.3 rad jitter
+      const dist = Phaser.Math.Between(30, 90);
+      const radius = Phaser.Math.Between(3, 8);
+      const p = this.add
+        .circle(x, y, radius, Phaser.Math.RND.pick([0xcc2222, 0xff4444, 0x991111]), 1)
+        .setDepth(15);
       this.tweens.add({
         targets: p,
-        x: x + Math.cos(angle) * speed,
-        y: y + Math.sin(angle) * speed,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
         alpha: 0,
         scaleX: 0,
         scaleY: 0,
-        duration: 400,
+        duration: Phaser.Math.Between(300, 500),
         ease: 'Power2',
         onComplete: () => p.destroy(),
       });
