@@ -120,6 +120,110 @@ acid neon palette, heavy black outlines, 2D icon, transparent background.
 
 ---
 
+---
+
+## 🧍 8.10.1 — ГЕРОЇ (ОПТИМІЗОВАНІ ПРОМПТИ)
+
+### player_serhiy_full.png
+```
+Full-body 2D vector art. Neon Psychedelic Cyber-Folk 2.0.
+Serhiy: flower crown, neon vyshyvanka, cyber-arm, Tryzub-staff, plasma wrench.
+Colors: Electric Blue, Neon Pink, Toxic Green.
+Effects: glitch aura, neon pollen, UV glow.
+Thick black outlines. Flat neon colors. Black background.
+Filename: player_serhiy_full.png
+```
+
+### npc_mykhas_full.png
+```
+Full-body 2D vector art. Neon Psychedelic Cyber-Folk 2.0.
+Mykhas: neon hoodie with folk symbols, goggles, Electric Blue hair, mini Tryzub-drone.
+Effects: glitch halo, neon sparks.
+Thick outlines. Flat neon colors. Black background.
+Filename: npc_mykhas_full.png
+```
+
+### npc_babtsya_full.png
+```
+Full-body 2D vector art. Neon Psychedelic Cyber-Folk 2.0.
+Babtsya Healer: neon flower crown, glowing rushnyk shawl, pysanka-staff.
+Effects: UV smoke, neon pollen, glitch aura.
+Thick outlines. Flat neon colors. Black background.
+Filename: npc_babtsya_full.png
+```
+
+---
+
+## 🌄 8.10.2 — ЛОКАЦІЇ (ОПТИМІЗОВАНІ ПРОМПТИ)
+
+### location_khutir_day.png
+```
+2D vector environment. Neon Psychedelic Cyber-Folk 2.0.
+Cyber-khutir: hut fused with servers, neon embroidery, glowing Tryzub symbols.
+Effects: neon pollen, glitch aura.
+Flat neon colors. Thick outlines.
+Filename: location_khutir_day.png
+```
+
+### location_khutir_night.png
+```
+2D vector environment. Neon Psychedelic Cyber-Folk 2.0.
+Night cyber-khutir: UV sky, glowing embroidery, neon windows, Tryzub constellations.
+Effects: glitch lightning, neon fog.
+Filename: location_khutir_night.png
+```
+
+### location_forest_neon.png
+```
+2D vector environment. Neon Psychedelic Cyber-Folk 2.0.
+Neon forest: UV bark, Electric Blue leaves, glowing pysanka symbols.
+Effects: neon fireflies, glitch distortions.
+Filename: location_forest_neon.png
+```
+
+### location_field_sunflowers.png
+```
+2D vector environment. Neon Psychedelic Cyber-Folk 2.0.
+Neon sunflower field: Electric Blue stems, Neon Pink petals, Tryzub centers.
+Effects: neon haze, glitch horizon.
+Filename: location_field_sunflowers.png
+```
+
+### location_boss_arena.png
+```
+2D vector environment. Neon Psychedelic Cyber-Folk 2.0.
+Boss arena: concrete monoliths with folk carvings, glowing Tryzub pillars, UV cracks.
+Effects: glitch vortex, neon smoke.
+Filename: location_boss_arena.png
+```
+
+---
+
+## 🔱 8.10.3 — СИМВОЛИ (ОПТИМІЗОВАНІ ПРОМПТИ)
+
+### symbol_pysanka_glow.png
+```
+Glowing pysanka symbol. Neon Psychedelic Cyber-Folk 2.0.
+Electric Blue + Neon Pink. Glitch halo. UV glow.
+Filename: symbol_pysanka_glow.png
+```
+
+### symbol_vyshyvanka_knot.png
+```
+Geometric vyshyvanka knot. Neon Pink + Ultra-Violet.
+Neon embroidery glow. Thick outlines.
+Filename: symbol_vyshyvanka_knot.png
+```
+
+### symbol_rushnyk_cross.png
+```
+Rushnyk cross-stitch symbol. Electric Blue + Toxic Green.
+UV glow. Sacred aura. Thick outlines.
+Filename: symbol_rushnyk_cross.png
+```
+
+---
+
 ## 📐 TECHNICAL REQUIREMENTS (all assets)
 
 | Property        | Value                                  |
