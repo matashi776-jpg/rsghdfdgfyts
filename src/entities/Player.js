@@ -27,11 +27,13 @@ export default class Player {
       'idle',
       {
         idle: {
+          // Idle state: defender is ready to fire but no target is in range.
           enter:   () => {},
           execute: () => {},
           exit:    () => {},
         },
         shooting: {
+          // Shooting state: defender has acquired a target (managed by BattleScene update loop).
           enter:   () => {},
           execute: () => {},
           exit:    () => {},

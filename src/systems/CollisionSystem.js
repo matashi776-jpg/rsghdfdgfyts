@@ -6,6 +6,7 @@
  *   scene.enemiesGroup, scene.projectilesGroup, scene.house,
  *   scene.modifiers, scene.bulletPool
  */
+import { TRAIL_CLEANUP_DELAY_MS } from '../entities/constants.js';
 export default class CollisionSystem {
   /** @param {Phaser.Scene} scene */
   constructor(scene) {
@@ -59,7 +60,7 @@ export default class CollisionSystem {
       // Fallback for plain sprites (backward compat)
       if (proj.particleTrail && proj.particleTrail.active) {
         proj.particleTrail.stopFollow();
-        scene.time.delayedCall(260, () => {
+        scene.time.delayedCall(TRAIL_CLEANUP_DELAY_MS, () => {
           if (proj.particleTrail && proj.particleTrail.active) {
             proj.particleTrail.destroy();
           }

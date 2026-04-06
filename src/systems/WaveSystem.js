@@ -8,6 +8,14 @@
  *   scene._waveDuration, scene.gameOver, scene.enemyManager,
  *   scene._waveLabelTxt, scene.modifiers
  */
+
+/** Fastest allowed enemy spawn interval (ms). */
+const MIN_SPAWN_INTERVAL = 500;
+/** Base spawn interval on wave 1 (ms). */
+const BASE_SPAWN_INTERVAL = 2000;
+/** How much (ms) the interval decreases per wave. */
+const INTERVAL_DECREASE_PER_WAVE = 100;
+
 export default class WaveSystem {
   /** @param {Phaser.Scene} scene */
   constructor(scene) {
@@ -28,7 +36,10 @@ export default class WaveSystem {
     if (scene.wave === 10) {
       scene.enemyManager.spawnBoss();
     } else {
-      const interval = Math.max(500, 2000 - scene.wave * 100);
+      const interval = Math.max(
+        MIN_SPAWN_INTERVAL,
+        BASE_SPAWN_INTERVAL - scene.wave * INTERVAL_DECREASE_PER_WAVE,
+      );
 
       this._spawnTimer = scene.time.addEvent({
         delay:         interval,

@@ -3,6 +3,8 @@
  * A single neon projectile fired by a defender.
  * Extends Phaser.Physics.Arcade.Sprite so it can live inside a physics Group.
  */
+import { TRAIL_CLEANUP_DELAY_MS, BULLET_LIFETIME_MS } from './constants.js';
+
 export default class Bullet extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'particle_neon_pink');
@@ -40,8 +42,8 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     trail.startFollow(this);
     this.particleTrail = trail;
 
-    // Auto-destroy after 2 s if it hasn't hit anything
-    this.scene.time.delayedCall(2000, () => this._retire());
+    // Auto-destroy after BULLET_LIFETIME_MS if it hasn't hit anything
+    this.scene.time.delayedCall(BULLET_LIFETIME_MS, () => this._retire());
   }
 
   /** Deactivate and clean up trail. */
@@ -49,7 +51,7 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     if (!this.active) return;
     if (this.particleTrail && this.particleTrail.active) {
       this.particleTrail.stopFollow();
-      this.scene.time.delayedCall(260, () => {
+      this.scene.time.delayedCall(TRAIL_CLEANUP_DELAY_MS, () => {
         if (this.particleTrail && this.particleTrail.active) {
           this.particleTrail.destroy();
           this.particleTrail = null;

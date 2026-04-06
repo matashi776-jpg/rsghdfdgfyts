@@ -4,6 +4,7 @@
  * Manages firing and lifetime of all projectiles in BattleScene.
  */
 import Bullet from './Bullet.js';
+import { BULLET_SPAWN_OFFSET_X, TRAIL_CLEANUP_DELAY_MS } from './constants.js';
 
 export default class BulletPool {
   /** @param {Phaser.Scene} scene */
@@ -24,10 +25,18 @@ export default class BulletPool {
    * @param {Phaser.GameObjects.Sprite} target
    */
   fire(defender, target) {
-    const bullet = this.group.get(defender.x + 22, defender.y);
+    const bullet = this.group.get(
+      defender.x + BULLET_SPAWN_OFFSET_X,
+      defender.y,
+    );
     if (!bullet) return; // pool exhausted
 
-    bullet.fire(defender.x + 22, defender.y, target.x, target.y);
+    bullet.fire(
+      defender.x + BULLET_SPAWN_OFFSET_X,
+      defender.y,
+      target.x,
+      target.y,
+    );
   }
 
   /**
@@ -39,7 +48,7 @@ export default class BulletPool {
     if (!bullet.active) return;
     if (bullet.particleTrail && bullet.particleTrail.active) {
       bullet.particleTrail.stopFollow();
-      this.scene.time.delayedCall(260, () => {
+      this.scene.time.delayedCall(TRAIL_CLEANUP_DELAY_MS, () => {
         if (bullet.particleTrail && bullet.particleTrail.active) {
           bullet.particleTrail.destroy();
           bullet.particleTrail = null;

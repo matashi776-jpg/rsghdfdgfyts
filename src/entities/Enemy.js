@@ -11,6 +11,10 @@ export default class Enemy {
 
   /**
    * Definitions for each enemy type.
+   * baseSpeed: px/s at wave 1 (+10% per wave)
+   * hpMult: multiplier on top of the wave-scaled baseHP
+   * w/h: display dimensions in pixels
+   * tint: neon colour tint applied to the sprite
    * @type {Object.<string, {baseSpeed:number, hpMult:number, w:number, h:number, tint:number, isBoss:boolean}>}
    */
   static DEFS = {
