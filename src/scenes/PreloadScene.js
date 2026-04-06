@@ -26,6 +26,8 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('bg', '/bg.png');
     this.load.image('hero', '/hero.png');
     this.load.image('goose', '/goose.png');
+    this.load.image('bureaucrat', '/bureaucrat.png');
+    this.load.image('boss', '/boss.png');
     this.load.image('borshch', '/borshch.png');
     this.load.audio('bg_music', '/bgm.mp3');
   }
@@ -45,6 +47,8 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'hero', color: 0xff8800, w: 64, h: 96 },
       { key: 'goose', color: 0xffffff, w: 48, h: 64 },
       { key: 'borshch', color: 0xcc1111, w: 16, h: 16 },
+      { key: 'bureaucrat', color: 0x888888, w: 28, h: 38 },
+      { key: 'boss', color: 0x333366, w: 64, h: 80 },
     ];
 
     for (const fb of fallbacks) {
