@@ -9,7 +9,8 @@ export default class Calculator {
    * @returns {number}
    */
   static enemyHP(wave) {
-    return Math.floor(100 * Math.pow(1.18, wave - 1));
+    const w = Math.max(1, Number(wave) || 1);
+    return Math.floor(100 * Math.pow(1.18, w - 1));
   }
 
   /**
@@ -28,6 +29,7 @@ export default class Calculator {
    * @returns {number}
    */
   static goldReward(wave) {
-    return Math.floor(15 + 5 * Math.sqrt(wave));
+    const w = Math.max(1, Number(wave) || 1);
+    return Math.floor(15 + 5 * Math.sqrt(w));
   }
 }

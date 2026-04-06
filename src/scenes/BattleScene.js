@@ -176,8 +176,7 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Particles ───────────────────────────────────────────────────────────────
 
   _buildParticleSystem() {
-    // We'll emit particles manually using graphics (no atlas needed)
-    this._particles = [];
+    // Particles are created on-demand as individual circle objects with tween callbacks.
   }
 
   _emitHitExplosion(x, y) {
@@ -491,8 +490,6 @@ export default class BattleScene extends Phaser.Scene {
     });
 
     proj._damage = tower.damage;
-    proj._target = target;
-    proj._targetId = target.sprite ? target.sprite.x + '' + target.sprite.y : '';
   }
 
   // ─── Main Update ─────────────────────────────────────────────────────────────
@@ -509,6 +506,12 @@ export default class BattleScene extends Phaser.Scene {
       }
 
       enemy.update();
+
+      // Guard: update() may have marked the enemy dead (e.g. via a future extension).
+      if (!enemy.alive) {
+        this.enemies.splice(i, 1);
+        continue;
+      }
 
       // Check if enemy reached the hero
       if (enemy.sprite && enemy.sprite.active && enemy.sprite.x <= DEATH_X) {

@@ -114,6 +114,7 @@ export default class Tower {
       this._shootTimer.destroy();
     }
     if (this.sprite && this.sprite.active) {
+      this.scene.tweens.killTweensOf(this.sprite);
       this.sprite.destroy();
     }
   }
