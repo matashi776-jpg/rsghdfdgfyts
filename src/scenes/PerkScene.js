@@ -2,56 +2,102 @@
  * PerkScene.js
  * Neon Psychedelic perk-selection overlay — Оборона Ланчина V4.0
  *
- * Shows 3 stylized neon cards every 5 waves.
- * Perks (as specified):
- *   - Золотий Талон    — passive money generation ×2
- *   - Техно-Печатка    — house takes 30% less damage
- *   - Кислотний Буряк  — bullet damage ×1.5 + acid splash (extra AOE damage)
+ * Shows 3 random neon cards every 5 waves.
+ *
+ * Full perk roster (Part 4 — Balance & Perks):
+ *   - Золотий Талон    — +100% gold, golden explosion sparks
+ *   - Кислотний Буряк  — poison bullets (5 dmg/s) + 20% slow
+ *   - Залізна Печатка  — shield reflects 10% damage back to enemies
+ *   - Кібер-Рушник     — +20% fire rate, neon bullet trails
+ *   - Вибух Трембіти   — sound-wave blast every 10 s, knockback
+ *   - Фолк-Овердрайв   — all stats +10% for 8 s (repeating buff)
  *
  * All text is glowing neon (Cyan / Magenta).
  */
 
 const ALL_PERKS = [
+  // ── Golden Coupon ──────────────────────────────────────────────────────────
   {
+    id:        'goldenCoupon',
     name:      'Золотий Талон',
-    desc:      '💰 Пасивний прибуток ×2\n(Нео-монети течуть самі!)',
+    desc:      '💰 +100% золота з ворогів\nВороги вибухають золотими іскрами\nЗолото притягується магнітом',
     color:     0x2a1a00,
     accent:    0xffcc00,
     textColor: '#ffdd44',
     glowColor: '#ffcc00',
-    effect: (mod) => { mod.passiveIncome *= 2; },
+    effect: (mod) => {
+      mod.goldMultiplier = (mod.goldMultiplier || 1) * 2;
+      mod.goldenExplosion = true;
+    },
   },
+  // ── Radioactive Beet ───────────────────────────────────────────────────────
   {
-    name:      'Техно-Печатка',
-    desc:      '🛡 Хутір отримує на 30% менше шкоди\n(Нано-щит активовано!)',
-    color:     0x001a33,
-    accent:    0x00ffff,
-    textColor: '#00ffff',
-    glowColor: '#00ffff',
-    // House takes 30% less damage: wallDefense acts as divisor in damage formula,
-    // so multiplying by 1/0.7 ≈ 1.43 reduces incoming damage to 70% of original.
-    effect: (mod) => { mod.wallDefense *= (1 / 0.7); },
-  },
-  {
+    id:        'radioactiveBeet',
     name:      'Кислотний Буряк',
-    desc:      '⚗ Шкода кулі ×1.5\n+ Кислотний сплеск (AOE)',
+    desc:      '☢ Кулі накладають отруту (5 шк/с)\nОтрута уповільнює ворогів на 20%\nВороги світяться фіолетовим',
     color:     0x1a0022,
     accent:    0xff00aa,
     textColor: '#ff44ff',
     glowColor: '#ff00aa',
     effect: (mod) => {
-      mod.damage *= 1.5;
-      mod.acidSplash = (mod.acidSplash || 0) + 1;
+      mod.poisonDPS  = (mod.poisonDPS  || 0) + 5;
+      mod.poisonSlow = Math.min(0.8, (mod.poisonSlow || 0) + 0.2);
     },
   },
+  // ── Iron Seal ──────────────────────────────────────────────────────────────
   {
-    name:      'Козацький Драйв',
-    desc:      '⚡ Швидкість атаки +30%\n(Сергій в кайфі!)',
+    id:        'ironSeal',
+    name:      'Залізна Печатка',
+    desc:      '🛡 Хутір отримує щит-рушник\nВідбиває 10% шкоди назад ворогам\nЩит пульсує в такт музиці',
+    color:     0x001a33,
+    accent:    0x00ffff,
+    textColor: '#00ffff',
+    glowColor: '#00ffff',
+    effect: (mod) => {
+      mod.reflectPercent = Math.min(0.5, (mod.reflectPercent || 0) + 0.10);
+      // Backward-compat: keep wallDefense bonus for legacy damage formula
+      mod.wallDefense *= (1 / 0.9);
+    },
+  },
+  // ── Cyber-Rushnyk ──────────────────────────────────────────────────────────
+  {
+    id:        'cyberRushnyk',
+    name:      'Кібер-Рушник',
+    desc:      '⚡ Швидкість стрільби +20%\nКулі залишають неоновий слід\n(Сергій в кайфі!)',
     color:     0x001122,
     accent:    0x4488ff,
     textColor: '#88aaff',
     glowColor: '#4488ff',
-    effect: (mod) => { mod.attackSpeed = Math.max(0.1, mod.attackSpeed - 0.3); },
+    effect: (mod) => {
+      mod.attackSpeed  = Math.max(0.1, (mod.attackSpeed || 1) * 0.8);
+      mod.neonTrail    = true;
+    },
+  },
+  // ── Trembita Blast ─────────────────────────────────────────────────────────
+  {
+    id:        'trembitaBlast',
+    name:      'Вибух Трембіти',
+    desc:      '📯 Кожні 10 сек — звукова хвиля\nВідкидає ворогів назад\n(Боюфи тікають від звуку!)',
+    color:     0x1a0a00,
+    accent:    0xff8800,
+    textColor: '#ffaa44',
+    glowColor: '#ff8800',
+    effect: (mod) => {
+      mod.trembitaBlast = true;
+    },
+  },
+  // ── Folk Overdrive ─────────────────────────────────────────────────────────
+  {
+    id:        'folkOverdrive',
+    name:      'Фолк-Овердрайв',
+    desc:      '🎵 Музика прискорюється\nВсі характеристики +10% на 8 с\n(Повторюється кожні 20 с)',
+    color:     0x00150a,
+    accent:    0x00ff88,
+    textColor: '#44ffaa',
+    glowColor: '#00ff88',
+    effect: (mod) => {
+      mod.folkOverdrive = true;
+    },
   },
 ];
 
@@ -103,8 +149,9 @@ export default class PerkScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 18, fill: true },
     }).setOrigin(0.5);
 
-    // Always show the 3 required perks (first 3 from ALL_PERKS)
-    const chosen = ALL_PERKS.slice(0, 3);
+    // Show 3 randomly chosen distinct perks each time
+    const shuffled = ALL_PERKS.slice().sort(() => Math.random() - 0.5);
+    const chosen   = shuffled.slice(0, 3);
 
     const CARD_W  = 300;
     const CARD_H  = 320;

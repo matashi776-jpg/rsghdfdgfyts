@@ -2,14 +2,15 @@
  * BattleScene.js
  * Dynamic battle engine — Оборона Ланчина V4.0 NEON PSYCHEDELIC
  *
- * Changes from V3:
- *  - Wave duration: 80 s (was 60 s)
- *  - Enemy scaling: +30% HP and +10% speed per wave
- *  - Boss appearance: bgm.setRate(1.2)
- *  - Neon projectile trails (pink/orange additive particles)
- *  - House tiers with gameplay bonuses
- *  - Neon visual style throughout
+ * Part 4 changes:
+ *  - Formulas delegated to Calculator.js (linear+log HP, wave-based speed/gold)
+ *  - Full perk effects: poison (Radioactive Beet), reflection (Iron Seal),
+ *    gold multiplier + golden explosions (Golden Coupon), fire-rate boost
+ *    (Cyber-Rushnyk), Trembita Blast knockback, Folk Overdrive timed buff
+ *  - Meta-progression permanent bonuses loaded from localStorage
  */
+import Calculator from '../utils/Calculator.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -18,8 +19,11 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   init() {
+    // ── Load persistent meta-upgrades from localStorage ─────────────────────
+    const meta = BattleScene._loadMeta();
+
     this.wave          = 1;
-    this.houseLevel    = 1;
+    this.houseLevel    = meta.houseLevel;
     this.baseEnemyHP   = 100;
     this.money         = 50;
     this.gameOver      = false;
@@ -27,14 +31,52 @@ export default class BattleScene extends Phaser.Scene {
     this.waveActive    = false;
     this._waveElapsed  = 0;
     this._waveDuration = 80000; // 80 seconds per wave
-    this.modifiers     = {
-      damage:        1,
-      passiveIncome: 1,
-      attackSpeed:   1,
-      wallDefense:   1,
+
+    // Modifier bag — all perk effects accumulate here
+    this.modifiers = {
+      damage:          1 + meta.permDamageBonus,      // flat multiplier
+      passiveIncome:   1 + meta.permIncomeBonus,
+      attackSpeed:     1,                              // lower = faster
+      wallDefense:     1,
+      goldMultiplier:  1 + meta.permGoldBonus,
+      poisonDPS:       0,   // per-second poison tick damage
+      poisonSlow:      0,   // fraction 0–0.8
+      reflectPercent:  0,   // fraction of incoming damage reflected back
+      goldenExplosion: false,
+      neonTrail:       false,
+      trembitaBlast:   false,
+      folkOverdrive:   false,
     };
-    this.houseMaxHP = 2000;
-    this.houseHP    = 2000;
+
+    // Base weapon damage — boosted by meta weapon level
+    this._baseBulletDamage = 20 + Calculator.weaponDamageBonus(meta.weaponLevel);
+
+    // House HP scaled by meta house level
+    const hpScale = [2000, 2400, 3200, 5000, 12000];
+    this.houseMaxHP = hpScale[meta.houseLevel - 1] ?? 2000;
+    this.houseHP    = this.houseMaxHP;
+  }
+
+  // ─── Meta-Progression Persistence ────────────────────────────────────────
+
+  static _loadMeta() {
+    try {
+      const raw = localStorage.getItem('meta_upgrades');
+      if (raw) return JSON.parse(raw);
+    } catch (_) { /* ignore */ }
+    return {
+      houseLevel:       1,
+      weaponLevel:      1,
+      permGoldBonus:    0,
+      permDamageBonus:  0,
+      permIncomeBonus:  0,
+      permHPBonus:      0,
+      savedGold:        0,
+    };
+  }
+
+  static _saveMeta(data) {
+    try { localStorage.setItem('meta_upgrades', JSON.stringify(data)); } catch (_) { /* ignore */ }
   }
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -270,18 +312,18 @@ export default class BattleScene extends Phaser.Scene {
     if (this.gameOver) return;
     const { height } = this.scale;
     const roll = Math.random();
-    let type, baseSpeed, hpMult, dispW, dispH, tint;
+    let type, speedMult, hpMult, dispW, dispH, tint;
 
     if (roll < 0.5) {
-      type = 'enemy_clerk'; baseSpeed = 60; hpMult = 1.0; dispW = 48; dispH = 64; tint = 0xaa44ff;
+      type = 'enemy_clerk';  speedMult = 1.0; hpMult = 1.0; dispW = 48; dispH = 64; tint = 0xaa44ff;
     } else if (roll < 0.80) {
-      type = 'enemy_runner'; baseSpeed = 120; hpMult = 0.7; dispW = 40; dispH = 56; tint = 0xff6600;
+      type = 'enemy_runner'; speedMult = 2.0; hpMult = 0.7; dispW = 40; dispH = 56; tint = 0xff6600;
     } else {
-      type = 'enemy_tank'; baseSpeed = 30; hpMult = 3.0; dispW = 80; dispH = 80; tint = 0x00ff44;
+      type = 'enemy_tank';   speedMult = 0.5; hpMult = 3.0; dispW = 80; dispH = 80; tint = 0x00ff44;
     }
 
-    // +10% speed per wave (wave starts at 1)
-    const speed = baseSpeed * (1 + (this.wave - 1) * 0.10);
+    const speed = Calculator.enemySpeed(this.wave, speedMult);
+    const hp    = Calculator.enemyHP(this.wave, hpMult);
 
     const y     = Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
     const enemy = this.enemiesGroup.create(1340, y, type);
@@ -289,11 +331,12 @@ export default class BattleScene extends Phaser.Scene {
     enemy.setTint(tint);
     enemy.body.setVelocityX(-speed);
 
-    // +30% HP per wave
-    enemy.maxHp           = Math.round(this.baseEnemyHP * (1 + (this.wave - 1) * 0.30) * hpMult);
-    enemy.hp              = enemy.maxHp;
+    enemy.maxHp           = hp;
+    enemy.hp              = hp;
     enemy.isBoss          = false;
     enemy.isAttackingWall = false;
+    enemy.poisonTimer     = 0;   // ms accumulator for poison ticks
+    enemy.poisoned        = false;
     enemy.setDepth(4);
   }
 
@@ -334,9 +377,30 @@ export default class BattleScene extends Phaser.Scene {
 
   _hitEnemy(proj, enemy) {
     if (!proj.active || !enemy.active) return;
-    const damage = Math.floor(20 * this.modifiers.damage);
+
+    const playerDamageBonus = this.modifiers.damage - 1;
+    const damage = Calculator.damage(this._baseBulletDamage, playerDamageBonus);
+
     enemy.hp -= damage;
     this._spawnHitParticle(proj.x, proj.y);
+
+    // Radioactive Beet — apply poison
+    if (this.modifiers.poisonDPS > 0 && !enemy.isBoss) {
+      enemy.poisoned = true;
+      if (!enemy.poisonedTint) {
+        enemy.poisonedTint = true;
+        enemy.setTint(0xcc44ff);
+      }
+    }
+
+    // Iron Seal — reflect a fraction of damage back
+    if (this.modifiers.reflectPercent > 0 && enemy.isAttackingWall) {
+      const reflected = Math.floor(damage * this.modifiers.reflectPercent);
+      if (reflected > 0) {
+        enemy.hp -= reflected;
+      }
+    }
+
     if (proj.particleTrail) {
       proj.particleTrail.stopFollow();
       this.time.delayedCall(260, () => {
@@ -351,8 +415,16 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _killEnemy(enemy) {
-    this.money += 20;
-    this._spawnDeathExplosion(enemy.x, enemy.y);
+    const gold = Calculator.goldReward(this.wave, this.modifiers.goldMultiplier);
+    this.money += gold;
+
+    // Golden Coupon — golden spark explosion
+    if (this.modifiers.goldenExplosion) {
+      this._spawnGoldenExplosion(enemy.x, enemy.y, gold);
+    } else {
+      this._spawnDeathExplosion(enemy.x, enemy.y);
+    }
+
     const wasBoss = enemy.isBoss;
     enemy.destroy();
 
@@ -381,6 +453,24 @@ export default class BattleScene extends Phaser.Scene {
     }).setDepth(15);
     emitter.explode(30, x, y);
     this.time.delayedCall(800, () => { if (emitter.active) emitter.destroy(); });
+  }
+
+  _spawnGoldenExplosion(x, y, goldAmount) {
+    // Golden sparks instead of pink neon
+    const emitter = this.add.particles(x, y, 'particle_neon_pink', {
+      speed:    { min: 60, max: 280 },
+      scale:    { start: 1.4, end: 0 },
+      alpha:    { start: 1, end: 0 },
+      lifespan: { min: 300, max: 700 },
+      angle:    { min: 0, max: 360 },
+      tint:     [0xffd700, 0xffcc00, 0xffee44, 0xffffff],
+      emitting: false,
+    }).setDepth(15);
+    emitter.explode(35, x, y);
+    this.time.delayedCall(800, () => { if (emitter.active) emitter.destroy(); });
+
+    // Floating gold text
+    this._floatingText && this._floatingText(x, y - 24, `+${goldAmount} ₴`, '#ffd700');
   }
 
   _spawnHitParticle(x, y) {
@@ -465,12 +555,65 @@ export default class BattleScene extends Phaser.Scene {
       }
     }
 
+    // Radioactive Beet — poison ticks
+    if (this.modifiers.poisonDPS > 0) {
+      for (const enemy of this.enemiesGroup.getChildren()) {
+        if (!enemy.active || !enemy.poisoned) continue;
+        enemy.poisonTimer = (enemy.poisonTimer || 0) + delta;
+        // Tick every 1000 ms
+        if (enemy.poisonTimer >= 1000) {
+          enemy.poisonTimer -= 1000;
+          const poisonDmg = this.modifiers.poisonDPS;
+          enemy.hp -= poisonDmg;
+          if (enemy.hp <= 0 && enemy.active) {
+            this._killEnemy(enemy);
+          }
+        }
+        // Slow effect: reduce velocity magnitude
+        if (!enemy.isBoss && enemy.body && this.modifiers.poisonSlow > 0) {
+          const vx = enemy.body.velocity.x;
+          // Only slow if moving (not at wall)
+          if (vx < 0) {
+            const targetSpeed = Calculator.enemySpeed(this.wave) * (1 - this.modifiers.poisonSlow);
+            if (Math.abs(vx) > targetSpeed) {
+              enemy.body.setVelocityX(-targetSpeed);
+            }
+          }
+        }
+      }
+    }
+
     // Wall damage
     const defenseInv = delta / (Math.max(0.1, this.modifiers.wallDefense) * 1000);
     for (const enemy of this.enemiesGroup.getChildren()) {
       if (!enemy.active || !enemy.isAttackingWall) continue;
       const dps = enemy.isBoss ? 2.0 : 0.5;
       this.houseHP -= dps * defenseInv;
+    }
+
+    // Folk Overdrive — periodic all-stats +10% burst (8 s active, 20 s interval)
+    if (this.modifiers.folkOverdrive) {
+      this._folkTimer = (this._folkTimer || 0) + delta;
+      const INTERVAL = 20000;
+      const ACTIVE   = 8000;
+      if (!this._folkActive && this._folkTimer >= INTERVAL) {
+        this._folkTimer  = 0;
+        this._folkActive = true;
+        this._applyFolkBuff(true);
+        this.time.delayedCall(ACTIVE, () => {
+          this._folkActive = false;
+          this._applyFolkBuff(false);
+        });
+      }
+    }
+
+    // Trembita Blast — knockback wave every 10 s
+    if (this.modifiers.trembitaBlast) {
+      this._trembitaTimer = (this._trembitaTimer || 0) + delta;
+      if (this._trembitaTimer >= 10000) {
+        this._trembitaTimer = 0;
+        this._fireTrembitaBlast();
+      }
     }
 
     // Wave timer bar (neon style)
@@ -504,6 +647,53 @@ export default class BattleScene extends Phaser.Scene {
       this.gameOver = true;
       this._triggerGameOver();
     }
+  }
+
+  // ─── Perk Effects ─────────────────────────────────────────────────────────
+
+  /** Folk Overdrive — temporarily boost all stats by 10%. */
+  _applyFolkBuff(activate) {
+    const factor = activate ? 0.9 : (1 / 0.9);
+    this.modifiers.attackSpeed  = Math.max(0.1, this.modifiers.attackSpeed  * factor);
+    this.modifiers.wallDefense *= activate ? (1 / 0.9) : 0.9;
+    this._baseBulletDamage      = Math.round(this._baseBulletDamage * (activate ? 1.1 : (1 / 1.1)));
+
+    if (activate) {
+      this._floatingText && this._floatingText(
+        this.scale.width / 2, 80, '🎵 ФОЛК-ОВЕРДРАЙВ!', '#44ffaa',
+      );
+    }
+  }
+
+  /** Trembita Blast — shockwave that knocks all active enemies rightward. */
+  _fireTrembitaBlast() {
+    const { width, height } = this.scale;
+    const ring = this.add.circle(150, height / 2, 10, 0xffaa44, 0.0).setDepth(20);
+    this.tweens.add({
+      targets:  ring,
+      radius:   900,
+      alpha:    0.45,
+      duration: 500,
+      ease:     'Sine.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+
+    for (const enemy of this.enemiesGroup.getChildren()) {
+      if (!enemy.active || !enemy.body) continue;
+      // Knock back by adding a rightward impulse
+      const currentVX = enemy.body.velocity.x;
+      enemy.body.setVelocityX(currentVX + 300);
+      // Restore normal velocity after 400 ms
+      this.time.delayedCall(400, () => {
+        if (enemy.active && enemy.body) {
+          enemy.body.setVelocityX(-Calculator.enemySpeed(this.wave));
+        }
+      });
+    }
+
+    this._floatingText && this._floatingText(
+      width / 2, 60, '📯 ВИБУХ ТРЕМБІТИ!', '#ffaa44',
+    );
   }
 
   // ─── HUD Drawing ──────────────────────────────────────────────────────────
@@ -566,12 +756,17 @@ export default class BattleScene extends Phaser.Scene {
     const bgm = this.sound.get('bgm');
     if (bgm) bgm.setRate(1.0);
 
+    // Persist earned gold to meta so MetaScene can spend it
+    const meta = BattleScene._loadMeta();
+    meta.savedGold = (meta.savedGold || 0) + this.money;
+    BattleScene._saveMeta(meta);
+
     this._gameOverTxt.setVisible(true);
     this.cameras.main.shake(900, 0.03);
 
     this.time.delayedCall(4200, () => {
       this.scene.stop('UIScene');
-      this.scene.start('MenuScene');
+      this.scene.start('MetaScene');
     });
   }
 }
