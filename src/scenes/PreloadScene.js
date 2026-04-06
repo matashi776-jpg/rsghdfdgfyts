@@ -59,6 +59,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('enemy_clerk',     'enemy_clerk.png');
     this.load.image('enemy_runner',    'enemy_runner.png');
     this.load.image('enemy_tank',      'enemy_tank.png');
+    this.load.image('boss_vakhtersha', 'boss_vakhtersha.png');
 
     // Audio
     this.load.audio('bgm', 'bgm.mp3');
@@ -173,6 +174,7 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'enemy_clerk',     color: 0x444466, w: 48,   h: 64  },
       { key: 'enemy_runner',    color: 0x664400, w: 40,   h: 56  },
       { key: 'enemy_tank',      color: 0x223355, w: 80,   h: 80  },
+      { key: 'boss_vakhtersha', color: 0x440066, w: 120,  h: 140 },
       // Stage 1 — player full
       { key: 'player_serhiy_full', color: 0xff00ff, w: 80, h: 120 },
       // Stage 1 — player frames (idle, walk, shoot)

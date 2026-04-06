@@ -58,7 +58,7 @@ export default class PerkSystem {
 
       card.on('pointerover', () => card.setTint(0xffff00));
       card.on('pointerout',  () => card.clearTint());
-      card.on('pointerdown', () => this._selectPerk(perk, [card, label, ...pool.map(() => null)]));
+      card.on('pointerdown', () => this._selectPerk(perk));
     });
   }
 

@@ -20,8 +20,8 @@ export default class UISystem {
       .setTint(0x333333)
       .setDepth(10);
 
-    // HP bar fill (overlay)
-    this._hpBarFg = this.scene.add.rectangle(14, 14, 296, 24, 0xff0044)
+    // HP bar fill (overlay) — starts at left edge of background (160 - 300/2 = 10)
+    this._hpBarFg = this.scene.add.rectangle(10, 28, 296, 24, 0xff0044)
       .setOrigin(0, 0.5)
       .setDepth(11);
 

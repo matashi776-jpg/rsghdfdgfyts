@@ -52,7 +52,7 @@ export default class BossVakhtersha extends Phaser.Physics.Arcade.Sprite {
     this.projectiles.getChildren().forEach(p => {
       if (p.active && (p.x < -50 || p.x > this.scene.scale.width + 50)) {
         p.setActive(false).setVisible(false);
-        p.body?.setVelocity(0, 0);
+        p.body?.setVelocity?.(0, 0);
       }
     });
   }
