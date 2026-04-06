@@ -2,7 +2,7 @@
  * UIScene.js
  * HUD overlay running in parallel over BattleScene.
  * Provides: gold display, wave display, goose drag-and-drop inventory,
- * and the Medical Ointment hero ability button.
+ * the Medical Ointment hero ability button, and a centred title/start overlay.
  */
 
 const GOOSE_COST = 50;
@@ -22,6 +22,7 @@ export default class UIScene extends Phaser.Scene {
     this._ointmentCooldownRemaining = 0;
     this._dragging = null; // currently dragged goose icon
 
+    this._buildTitleOverlay(width, height);
     this._buildTopBar(width);
     this._buildBottomBar(width, height);
     this._buildDragIcon(width, height);
@@ -42,6 +43,111 @@ export default class UIScene extends Phaser.Scene {
     // Initial sync
     this._goldText.setText(`₴ ${this._battle.gold}`);
     this._waveText.setText(`Wave ${this._battle.wave}`);
+  }
+
+  // ─── Title / Start overlay (Heroes 5 style) ──────────────────────────────────
+
+  _buildTitleOverlay(width, height) {
+    const overlayBg = this.add.graphics().setDepth(70);
+    overlayBg.fillStyle(0x000000, 0.78);
+    overlayBg.fillRect(0, 0, width, height);
+
+    // Centred game title
+    const titleText = this.add
+      .text(width / 2, height * 0.30, 'LANCHYN', {
+        fontSize: '54px',
+        fontFamily: '"Times New Roman", serif',
+        fontStyle: 'bold',
+        color: '#d4a017',
+        stroke: '#000000',
+        strokeThickness: 7,
+        shadow: { offsetX: 0, offsetY: 0, color: '#ff8c00', blur: 20, fill: true },
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(71);
+
+    const subtitleText = this.add
+      .text(width / 2, height * 0.40, 'vs  SAVOK', {
+        fontSize: '30px',
+        fontFamily: '"Times New Roman", serif',
+        fontStyle: 'italic',
+        color: '#c0c0c0',
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(71);
+
+    // Pulsating START GAME button
+    const btnX = width / 2;
+    const btnY = height * 0.58;
+
+    const btnBg = this.add.graphics().setDepth(71);
+    const _drawBtn = (alpha) => {
+      btnBg.clear();
+      btnBg.fillStyle(0x1a0030, 0.92);
+      btnBg.fillRoundedRect(btnX - 130, btnY - 28, 260, 56, 6);
+      btnBg.lineStyle(2, 0xb8860b, alpha);
+      btnBg.strokeRoundedRect(btnX - 130, btnY - 28, 260, 56, 6);
+    };
+    _drawBtn(1);
+
+    const startText = this.add
+      .text(btnX, btnY, '▶  START GAME', {
+        fontSize: '26px',
+        fontFamily: '"Times New Roman", serif',
+        fontStyle: 'bold',
+        color: '#d4a017',
+        stroke: '#000000',
+        strokeThickness: 4,
+        shadow: { offsetX: 0, offsetY: 0, color: '#ff8c00', blur: 14, fill: true },
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(72);
+
+    // Pulsate text scale
+    this.tweens.add({
+      targets: startText,
+      scaleX: 1.07,
+      scaleY: 1.07,
+      duration: 850,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Pulsate border glow
+    const glowObj = { v: 1 };
+    this.tweens.add({
+      targets: glowObj,
+      v: 0.3,
+      duration: 850,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => _drawBtn(glowObj.v),
+    });
+
+    // Hit zone – dismiss overlay and start battle
+    const startZone = this.add
+      .zone(btnX, btnY, 260, 56)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(73);
+
+    startZone.on('pointerover', () => startText.setColor('#ffe066'));
+    startZone.on('pointerout', () => startText.setColor('#d4a017'));
+    startZone.on('pointerdown', () => {
+      const toFade = [overlayBg, titleText, subtitleText, startText, btnBg];
+      this.tweens.add({
+        targets: toFade,
+        alpha: 0,
+        duration: 350,
+        onComplete: () => {
+          toFade.forEach((c) => c.destroy());
+          startZone.destroy();
+        },
+      });
+    });
   }
 
   // ─── Top Bar ─────────────────────────────────────────────────────────────────

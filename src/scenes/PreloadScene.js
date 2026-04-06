@@ -23,6 +23,7 @@ export default class PreloadScene extends Phaser.Scene {
       console.warn(`Asset not found: ${file.key} (${file.url}) – using fallback`);
     });
 
+    this.load.image('bg', '/image_1.png');
     this.load.image('hero', '/hero.png');
     this.load.image('goose', '/goose.png');
     this.load.image('borshch', '/borshch.png');
@@ -40,6 +41,7 @@ export default class PreloadScene extends Phaser.Scene {
    */
   _ensureFallbacks() {
     const fallbacks = [
+      { key: 'bg', color: 0x0a0a1a, w: 800, h: 600 },
       { key: 'hero', color: 0xff8800, w: 64, h: 96 },
       { key: 'goose', color: 0xffffff, w: 48, h: 64 },
       { key: 'borshch', color: 0xcc1111, w: 16, h: 16 },
