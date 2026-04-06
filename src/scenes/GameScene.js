@@ -85,7 +85,7 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  update(time) {
+  update(time, delta) {
     if (this._player) this._player.update(this._cursors, time);
     if (this._waves) this._waves.update();
   }

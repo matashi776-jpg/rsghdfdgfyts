@@ -24,7 +24,10 @@ export default class WaveSystem {
 
   stop() {
     this._active = false;
-    if (this._spawnTimer) { this._spawnTimer.remove(); this._spawnTimer = null; }
+    if (this._spawnTimer) {
+      this._spawnTimer.remove();
+      this._spawnTimer = null;
+    }
   }
 
   _nextWave() {

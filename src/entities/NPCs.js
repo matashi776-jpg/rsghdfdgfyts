@@ -23,7 +23,10 @@ export class NPC_Babtsya {
   }
 
   destroy() {
-    if (this.sprite) { this.sprite.destroy(); this.sprite = null; }
+    if (this.sprite) {
+      this.sprite.destroy();
+      this.sprite = null;
+    }
   }
 }
 
@@ -48,6 +51,9 @@ export class NPC_Mykhas {
   }
 
   destroy() {
-    if (this.sprite) { this.sprite.destroy(); this.sprite = null; }
+    if (this.sprite) {
+      this.sprite.destroy();
+      this.sprite = null;
+    }
   }
 }
