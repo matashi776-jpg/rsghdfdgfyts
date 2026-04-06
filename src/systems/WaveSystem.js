@@ -83,9 +83,14 @@ export default class WaveSystem {
 
     const roll  = Math.random();
     let enemy;
-    if (roll < 0.50)      { enemy = new Enemy_ZombieClerk(this._scene, 1340, y, hp, speed); }
-    else if (roll < 0.75) { enemy = new Enemy_Inspector(this._scene, 1340, y, hp * 0.7, speed); }
-    else                  { enemy = new Enemy_Archivarius(this._scene, 1340, y, hp * 2.5, speed); }
+    const w = GameConfig.SPAWN_WEIGHTS;
+    if (roll < w.zombie_clerk) {
+      enemy = new Enemy_ZombieClerk(this._scene, 1340, y, hp * GameConfig.SPAWN_HP_MULT.zombie_clerk, speed);
+    } else if (roll < w.zombie_clerk + w.inspector) {
+      enemy = new Enemy_Inspector(this._scene, 1340, y, hp * GameConfig.SPAWN_HP_MULT.inspector, speed);
+    } else {
+      enemy = new Enemy_Archivarius(this._scene, 1340, y, hp * GameConfig.SPAWN_HP_MULT.archivarius, speed);
+    }
 
     // Register sprite into the physics group so colliders work
     this._enemies.add(enemy.sprite);

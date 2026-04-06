@@ -25,7 +25,7 @@ export default class PerkSystem {
         this.modifiers.passiveIncome *= 2;
         break;
       case 'techno_pechatka':
-        this.modifiers.wallDefense *= 1 / 0.7; // 30% less incoming damage
+        this.modifiers.wallDefense *= 1 / GameConfig.TECHNO_PECHATKA_REDUCTION; // 30% less incoming damage
         break;
       case 'acid_buryak':
         this.modifiers.damage     *= 1.5;

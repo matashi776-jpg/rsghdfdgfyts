@@ -53,7 +53,7 @@ const GameConfig = {
       glowColor: '#ffcc00',
     },
     {
-      id:        'techno_pechатка',
+      id:        'techno_pechatka',
       name:      'Техно-Печатка',
       desc:      '🛡 Хутір отримує на 30% менше шкоди\n(Нано-щит активовано!)',
       accent:    0x00ffff,
@@ -82,6 +82,27 @@ const GameConfig = {
   NPC_HEAL_AMOUNT: 500,
   NPC_HEAL_COST: 100,
   NPC_MECHANIC_BOOST_DURATION: 10000, // ms
+
+  // ── Enemy spawn weights ───────────────────────────────────────────────────
+  SPAWN_WEIGHTS: {
+    zombie_clerk: 0.50,
+    inspector:    0.25,
+    archivarius:  0.25,
+  },
+
+  // HP multiplier per enemy subtype (relative to DifficultyDirector.enemyHP)
+  SPAWN_HP_MULT: {
+    zombie_clerk: 1.0,
+    inspector:    0.7,
+    archivarius:  2.5,
+  },
+
+  // Wall DPS from attacking enemies
+  ENEMY_WALL_DPS: 0.5,
+  BOSS_WALL_DPS:  2.0,
+
+  // Techno-Pechatka damage reduction factor (wallDefense multiplier)
+  TECHNO_PECHATKA_REDUCTION: 0.7,
 
   // ── Meta progression ──────────────────────────────────────────────────────
   META_LEVEL_KEY:  'acid_khutir_meta_level',

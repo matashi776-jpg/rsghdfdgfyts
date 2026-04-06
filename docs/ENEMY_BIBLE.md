@@ -9,7 +9,7 @@
 | Параметр | Значення |
 |----------|----------|
 | Клас | `Enemy_ZombieClerk` |
-| Тектура | `enemy_clerk` (→ `4.png`) |
+| Текстура | `enemy_clerk` (→ `4.png`) |
 | Розмір | 48 × 64 px |
 | Тінт | Neon Purple `#AA44FF` |
 | HP | `DifficultyDirector.enemyHP(wave)` |
