@@ -83,8 +83,8 @@ export default class UIScene extends Phaser.Scene {
     const battle = this.scene.get('BattleScene');
     if (!battle || battle.gameOver) return;
 
-    // Accumulate wave time in seconds
-    if (battle.waveActive && battle.wave !== 10) {
+    // Accumulate wave time in seconds (pause during boss waves)
+    if (battle.waveActive && !battle.bossActive) {
       this._elapsedSec += delta / 1000;
     } else if (!battle.waveActive) {
       this._elapsedSec = 0;
@@ -97,8 +97,8 @@ export default class UIScene extends Phaser.Scene {
       `Рівень: ${battle.wave}  |  Неон: ₴${battle.money}  |  Час: ${secLeft} сек`,
     );
 
-    // Boss bar label (wave 10)
-    if (battle.wave === 10 && battle.bossActive) {
+    // Boss bar label (wave 10 mini-boss or wave 15 full boss)
+    if (battle.bossActive) {
       this._bossLabelTxt.setVisible(true).setText('КІБЕР-БОС: ТОВАРИШ ВАХТЕРША');
     } else {
       this._bossLabelTxt.setVisible(false);

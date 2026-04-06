@@ -1,3 +1,7 @@
+import SaveManager      from '../utils/SaveManager.js';
+import DifficultyDirector  from '../utils/DifficultyDirector.js';
+import DynamicMusicSystem  from '../utils/DynamicMusicSystem.js';
+
 /**
  * BattleScene.js
  * Dynamic battle engine — Оборона Ланчина V4.0 NEON PSYCHEDELIC
@@ -27,6 +31,8 @@ export default class BattleScene extends Phaser.Scene {
     this.waveActive    = false;
     this._waveElapsed  = 0;
     this._waveDuration = 80000; // 80 seconds per wave
+    this._bossPhase    = 0;     // 0-3 based on boss HP %
+    this.pickedPerks   = [];    // names of perks chosen this run
     this.modifiers     = {
       damage:        1,
       passiveIncome: 1,
@@ -35,6 +41,10 @@ export default class BattleScene extends Phaser.Scene {
     };
     this.houseMaxHP = 2000;
     this.houseHP    = 2000;
+
+    // Systems
+    this.director    = new DifficultyDirector();
+    this.musicSystem = new DynamicMusicSystem(this);
   }
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -154,6 +164,9 @@ export default class BattleScene extends Phaser.Scene {
 
     // ── Launch persistent UI overlay ────────────────────────────────────────
     this.scene.launch('UIScene');
+
+    // ── Initialise music system (BGM may already be playing from StoryScene) ─
+    this.musicSystem.init();
   }
 
   // ─── House Upgrade ────────────────────────────────────────────────────────
@@ -223,11 +236,16 @@ export default class BattleScene extends Phaser.Scene {
     this._waveLabelTxt.setText(`Хвиля: ${this.wave}`);
 
     if (this.wave === 10) {
+      this._spawnMiniBoss();
+      this._spawnTimer   = null;
+      this._waveEndTimer = null;
+    } else if (this.wave === 15) {
       this._spawnBoss();
       this._spawnTimer   = null;
       this._waveEndTimer = null;
     } else {
-      const interval = Math.max(500, 2000 - this.wave * 100);
+      const baseInterval = Math.max(500, 2000 - this.wave * 100);
+      const interval     = Math.round(baseInterval * this.director.getSpawnIntervalMultiplier());
       this._spawnTimer = this.time.addEvent({
         delay: interval,
         loop:  true,
@@ -250,7 +268,10 @@ export default class BattleScene extends Phaser.Scene {
     if (this._spawnTimer)   { this._spawnTimer.remove();   this._spawnTimer   = null; }
     if (this._waveEndTimer) { this._waveEndTimer.remove(); this._waveEndTimer = null; }
 
-    if (this.wave === 5 || this.wave === 10) {
+    // Evaluate difficulty at the end of every wave
+    this.director.evaluate();
+
+    if (this.wave % 5 === 0) {
       this.scene.pause();
       this.scene.launch('PerkScene', { modifiers: this.modifiers, wave: this.wave });
     } else {
@@ -259,7 +280,8 @@ export default class BattleScene extends Phaser.Scene {
     }
   }
 
-  resumeFromPerk() {
+  resumeFromPerk(perkName) {
+    if (typeof perkName === 'string' && perkName.length > 0) this.pickedPerks.push(perkName);
     this.wave++;
     this._startWave();
   }
@@ -280,8 +302,8 @@ export default class BattleScene extends Phaser.Scene {
       type = 'enemy_tank'; baseSpeed = 30; hpMult = 3.0; dispW = 80; dispH = 80; tint = 0x00ff44;
     }
 
-    // +10% speed per wave (wave starts at 1)
-    const speed = baseSpeed * (1 + (this.wave - 1) * 0.10);
+    // +10% speed per wave, further scaled by DifficultyDirector
+    const speed = baseSpeed * (1 + (this.wave - 1) * 0.10) * this.director.getSpeedMultiplier();
 
     const y     = Phaser.Math.Between(Math.floor(height * 0.18), Math.floor(height * 0.82));
     const enemy = this.enemiesGroup.create(1340, y, type);
@@ -289,8 +311,8 @@ export default class BattleScene extends Phaser.Scene {
     enemy.setTint(tint);
     enemy.body.setVelocityX(-speed);
 
-    // +30% HP per wave
-    enemy.maxHp           = Math.round(this.baseEnemyHP * (1 + (this.wave - 1) * 0.30) * hpMult);
+    // +30% HP per wave, further scaled by DifficultyDirector
+    enemy.maxHp           = Math.round(this.baseEnemyHP * (1 + (this.wave - 1) * 0.30) * hpMult * this.director.getHPMultiplier());
     enemy.hp              = enemy.maxHp;
     enemy.isBoss          = false;
     enemy.isAttackingWall = false;
@@ -309,11 +331,8 @@ export default class BattleScene extends Phaser.Scene {
     boss.isAttackingWall = false;
     boss.setDepth(6);
     this.bossActive = true;
-    this._bossTitleTxt.setVisible(true);
-
-    // Boss arrival: speed up BGM
-    const bgm = this.sound.get('bgm');
-    if (bgm) bgm.setRate(1.2);
+    this._bossPhase = 0;
+    this._bossTitleTxt.setVisible(true).setText('КІБЕР-БОС: ТОВАРИШ ВАХТЕРША');
 
     // Flash screen neon pink
     const flash = this.add.rectangle(
@@ -322,6 +341,29 @@ export default class BattleScene extends Phaser.Scene {
       0xff00aa, 0,
     ).setDepth(50);
     this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 200, yoyo: true, repeat: 2 });
+  }
+
+  _spawnMiniBoss() {
+    const { height } = this.scale;
+    const boss = this.enemiesGroup.create(1200, height / 2, 'boss_vakhtersha');
+    boss.setDisplaySize(90, 108);
+    boss.setTint(0x00ffff); // cyan — distinguishes mini-boss from the real one
+    boss.body.setVelocityX(-22);
+    boss.maxHp           = 8000;
+    boss.hp              = 8000;
+    boss.isBoss          = true;
+    boss.isAttackingWall = false;
+    boss.setDepth(6);
+    this.bossActive = true;
+    this._bossTitleTxt.setVisible(true).setText('МІНІ-БОС: КІБЕР-КЛЕРК');
+
+    // Flash screen cyan
+    const flash = this.add.rectangle(
+      this.scale.width / 2, this.scale.height / 2,
+      this.scale.width, this.scale.height,
+      0x00ffff, 0,
+    ).setDepth(50);
+    this.tweens.add({ targets: flash, fillAlpha: 0.35, duration: 180, yoyo: true, repeat: 2 });
   }
 
   // ─── Combat ───────────────────────────────────────────────────────────────
@@ -336,6 +378,7 @@ export default class BattleScene extends Phaser.Scene {
     if (!proj.active || !enemy.active) return;
     const damage = Math.floor(20 * this.modifiers.damage);
     enemy.hp -= damage;
+    this.director.recordHit();
     this._spawnHitParticle(proj.x, proj.y);
     if (proj.particleTrail) {
       proj.particleTrail.stopFollow();
@@ -351,18 +394,19 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _killEnemy(enemy) {
-    this.money += 20;
+    const reward = enemy.isBoss ? 100 : 20;
+    this.money += reward;
+    this.director.recordKill();
+    this.director.recordGold(reward);
     this._spawnDeathExplosion(enemy.x, enemy.y);
     const wasBoss = enemy.isBoss;
     enemy.destroy();
 
     if (wasBoss) {
       this.bossActive = false;
+      this._bossPhase = 0;
       this._bossTitleTxt.setVisible(false);
       this._bossBarGfx.clear();
-      // Reset BGM rate
-      const bgm = this.sound.get('bgm');
-      if (bgm) bgm.setRate(1.0);
       this._endWave();
     }
   }
@@ -413,6 +457,8 @@ export default class BattleScene extends Phaser.Scene {
     }
     if (!target || minDist > 700 * 700) return;
 
+    this.director.recordShot();
+
     const proj = this.projectilesGroup.create(defender.x + 22, defender.y, 'particle_neon_pink');
     if (!proj) return;
     proj.setDisplaySize(16, 10);
@@ -455,6 +501,18 @@ export default class BattleScene extends Phaser.Scene {
     if (this.gameOver) return;
     const { width } = this.scale;
 
+    // ── Dynamic music ─────────────────────────────────────────────────────────
+    this.musicSystem.update(this.wave, this.bossActive, this._bossPhase);
+
+    // ── Boss phase tracking (0-3 based on HP %) ───────────────────────────────
+    if (this.bossActive) {
+      const boss = this.enemiesGroup.getChildren().find((e) => e.active && e.isBoss);
+      if (boss) {
+        const r = boss.hp / boss.maxHp;
+        this._bossPhase = r > 0.75 ? 0 : r > 0.50 ? 1 : r > 0.25 ? 2 : 3;
+      }
+    }
+
     // Defender fire timers
     const cooldown = Math.max(300, 1200 * this.modifiers.attackSpeed);
     for (const def of this.defendersGroup.getChildren()) {
@@ -469,8 +527,10 @@ export default class BattleScene extends Phaser.Scene {
     const defenseInv = delta / (Math.max(0.1, this.modifiers.wallDefense) * 1000);
     for (const enemy of this.enemiesGroup.getChildren()) {
       if (!enemy.active || !enemy.isAttackingWall) continue;
-      const dps = enemy.isBoss ? 2.0 : 0.5;
-      this.houseHP -= dps * defenseInv;
+      const dps    = enemy.isBoss ? 2.0 : 0.5;
+      const dmg    = dps * defenseInv;
+      this.houseHP -= dmg;
+      this.director.recordDamage(dmg);
     }
 
     // Wave timer bar (neon style)
@@ -484,7 +544,7 @@ export default class BattleScene extends Phaser.Scene {
       this._timerGfx.fillRect(width / 2 - 220, 38, 440 * (1 - ratio), 10);
       this._timerGfx.lineStyle(1, 0xff00ff, 0.6);
       this._timerGfx.strokeRect(width / 2 - 220, 38, 440, 10);
-    } else if (this.wave === 10) {
+    } else if (this.wave === 10 || this.wave === 15) {
       this._timerGfx.clear();
     }
 
@@ -562,16 +622,26 @@ export default class BattleScene extends Phaser.Scene {
     if (this._waveEndTimer) this._waveEndTimer.remove();
     this._passiveTimer.remove();
 
-    // Reset BGM rate
-    const bgm = this.sound.get('bgm');
-    if (bgm) bgm.setRate(1.0);
+    // Music death effect
+    this.musicSystem.onDeath();
+
+    // Persist run stats
+    const saveData = SaveManager.load();
+    saveData.stats.runs++;
+    if (this.wave > saveData.stats.bestWave) saveData.stats.bestWave = this.wave;
+    saveData.stats.totalGold += this.money;
+    SaveManager.save(saveData);
 
     this._gameOverTxt.setVisible(true);
     this.cameras.main.shake(900, 0.03);
 
     this.time.delayedCall(4200, () => {
       this.scene.stop('UIScene');
-      this.scene.start('MenuScene');
+      this.scene.start('DeathScene', {
+        wave:  this.wave,
+        gold:  this.money,
+        perks: this.pickedPerks,
+      });
     });
   }
 }

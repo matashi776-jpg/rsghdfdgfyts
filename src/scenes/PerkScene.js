@@ -103,8 +103,13 @@ export default class PerkScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 18, fill: true },
     }).setOrigin(0.5);
 
-    // Always show the 3 required perks (first 3 from ALL_PERKS)
-    const chosen = ALL_PERKS.slice(0, 3);
+    // Pick 3 distinct perks at random from the full pool
+    const pool   = ALL_PERKS.slice();
+    const chosen = [];
+    while (chosen.length < 3 && pool.length > 0) {
+      const idx = Phaser.Math.Between(0, pool.length - 1);
+      chosen.push(pool.splice(idx, 1)[0]);
+    }
 
     const CARD_W  = 300;
     const CARD_H  = 320;
@@ -189,7 +194,7 @@ export default class PerkScene extends Phaser.Scene {
 
     zone.on('pointerdown', () => {
       perk.effect(this.modifiers);
-      this._confirmSelection();
+      this._confirmSelection(perk.name);
     });
   }
 
@@ -211,7 +216,7 @@ export default class PerkScene extends Phaser.Scene {
 
   // ─── Selection Flow ───────────────────────────────────────────────────────
 
-  _confirmSelection() {
+  _confirmSelection(perkName) {
     // Neon flash
     const flash = this.add.rectangle(
       this.scale.width / 2,
@@ -225,7 +230,7 @@ export default class PerkScene extends Phaser.Scene {
     this.cameras.main.fadeOut(460, 0, 0, 20);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       const battle = this.scene.get('BattleScene');
-      battle.resumeFromPerk();
+      battle.resumeFromPerk(perkName);
       this.scene.stop();
       this.scene.resume('BattleScene');
     });
