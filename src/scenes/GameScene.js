@@ -6,6 +6,9 @@
 import Player from '../entities/Player.js';
 import WaveSystem from '../systems/WaveSystem.js';
 
+/** Fraction of enemy damage applied to the house per frame on contact. */
+const HOUSE_DAMAGE_MULTIPLIER = 0.05;
+
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
@@ -112,7 +115,7 @@ export default class GameScene extends Phaser.Scene {
     if (!enemy || !enemy.alive) return;
 
     const dmg = enemy.damage || 10;
-    this.houseHP = Math.max(0, this.houseHP - dmg * 0.05); // continuous damage per frame
+    this.houseHP = Math.max(0, this.houseHP - dmg * HOUSE_DAMAGE_MULTIPLIER);
 
     if (this.houseHP <= 0) {
       this._endGame(false);

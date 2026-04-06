@@ -8,6 +8,9 @@
  * Mini-Boss: Mini-Vakhtersha (HP 600, 2 phases)
  */
 
+const SPAWN_DELAY_MS = 1200;
+const WAVE_TRANSITION_DELAY_MS = 3000;
+
 // Enemy definitions matching ENEMY_BIBLE.md
 const ENEMY_DEFS = {
   zombie_clerk: { hp: 60,  speed: 40,  damage: 10, w: 28, h: 40, color: 0x44aa44 },
@@ -89,7 +92,7 @@ export default class WaveSystem {
     this._spawnEnemy(type, width + 60, y);
 
     if (this._spawnQueue.length > 0) {
-      this._spawnTimer = this.scene.time.delayedCall(1200, () => this._scheduleNextSpawn());
+      this._spawnTimer = this.scene.time.delayedCall(SPAWN_DELAY_MS, () => this._scheduleNextSpawn());
     }
   }
 
@@ -163,7 +166,7 @@ export default class WaveSystem {
     this._waveIndex++;
     if (this._waveIndex <= WAVE_DEFS.length) {
       // Small delay between waves
-      this.scene.time.delayedCall(3000, () => this._spawnWave(this._waveIndex));
+      this.scene.time.delayedCall(WAVE_TRANSITION_DELAY_MS, () => this._spawnWave(this._waveIndex));
     }
     // If index > WAVE_DEFS.length, the mini-boss is already dead → victory handled by GameScene
   }

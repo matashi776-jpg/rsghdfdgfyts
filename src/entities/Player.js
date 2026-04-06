@@ -2,6 +2,9 @@
  * Player.js
  * Сергій — кибер-тракторист. Supports WASD movement and LMB shooting.
  */
+
+const BULLET_LIFETIME_MS = 1500;
+
 export default class Player {
   /**
    * @param {Phaser.Scene} scene
@@ -108,8 +111,8 @@ export default class Player {
     bullet.setVelocity(vx, vy);
     bullet.playerDamage = this.damage;
 
-    // Destroy bullet after 1.5 s if it hits nothing
-    this.scene.time.delayedCall(1500, () => {
+    // Destroy bullet after BULLET_LIFETIME_MS if it hits nothing
+    this.scene.time.delayedCall(BULLET_LIFETIME_MS, () => {
       if (bullet && bullet.active) bullet.destroy();
     });
   }
