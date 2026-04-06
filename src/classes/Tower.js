@@ -64,7 +64,7 @@ export default class Tower {
       if (!enemy.alive || !enemy.sprite || !enemy.sprite.active) continue;
       // Same lane check: enemy Y close to tower Y
       if (Math.abs(enemy.sprite.y - this.sprite.y) > 60) continue;
-      const dist = this.sprite.x - enemy.sprite.x; // enemy comes from right
+      const dist = enemy.sprite.x - this.sprite.x; // enemy is to the right of tower
       if (dist > 0 && dist < this.range && dist < minDist) {
         minDist = dist;
         target = enemy;

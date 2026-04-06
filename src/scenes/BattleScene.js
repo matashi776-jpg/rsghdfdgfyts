@@ -31,7 +31,7 @@ export default class BattleScene extends Phaser.Scene {
 
   init() {
     this.wave = 1;
-    this.gold = 120;
+    this.gold = 1500;
     this.lives = 1; // one hit = game over
     this.enemies = [];
     this.towers = [];
@@ -243,8 +243,26 @@ export default class BattleScene extends Phaser.Scene {
   // ─── Physics ──────────────────────────────────────────────────────────────────
 
   _setupPhysics() {
-    // Overlap between projectiles and enemies is handled in update()
-    // to avoid destroy-in-callback issues.
+    // Group that holds every enemy sprite so Phaser can run overlap detection
+    this.enemiesGroup = this.physics.add.group();
+
+    // Collision between borshch projectiles and enemies
+    this.physics.add.overlap(this._borshchPool, this.enemiesGroup, (projSprite, enemySprite) => {
+      if (!projSprite.active || !enemySprite.active) return;
+      const enemy = enemySprite.enemyRef;
+      if (!enemy || !enemy.alive) return;
+
+      this._emitHitExplosion(projSprite.x, projSprite.y);
+      this._recycleProjectile(projSprite);
+      enemy.takeDamage(projSprite._damage || 30);
+
+      if (!enemy.alive) {
+        const idx = this.enemies.indexOf(enemy);
+        if (idx !== -1) {
+          this._onEnemyKilled(enemy, idx);
+        }
+      }
+    });
   }
 
   // ─── Preparation Countdown ───────────────────────────────────────────────────
@@ -464,6 +482,7 @@ export default class BattleScene extends Phaser.Scene {
     const hp = Math.floor(Calculator.enemyHP(this.wave) * hpMult);
     const enemy = new Enemy(this, SPAWN_X, lane, hp, speed, tier);
     this.enemies.push(enemy);
+    this.enemiesGroup.add(enemy.sprite);
   }
 
   // ─── Projectile Firing ───────────────────────────────────────────────────────
@@ -512,6 +531,7 @@ export default class BattleScene extends Phaser.Scene {
 
       // Check if enemy reached the hero
       if (enemy.sprite && enemy.sprite.active && enemy.sprite.x <= DEATH_X) {
+        this.enemiesGroup.remove(enemy.sprite, true);
         enemy.destroy();
         this.enemies.splice(i, 1);
         this._triggerGameOver();
@@ -519,37 +539,14 @@ export default class BattleScene extends Phaser.Scene {
       }
     }
 
-    // Check projectile–enemy collisions
+    // Projectile–enemy collision is handled by this.physics.add.overlap in _setupPhysics()
     const activeProjs = this._borshchPool.getMatching('active', true);
     for (const proj of activeProjs) {
       if (!proj.active || !proj.body) continue;
 
-      // Out of bounds
+      // Out of bounds – recycle
       if (proj.x < -20 || proj.x > 900 || proj.y < -20 || proj.y > 620) {
         this._recycleProjectile(proj);
-        continue;
-      }
-
-      // Check against enemies
-      for (let j = this.enemies.length - 1; j >= 0; j--) {
-        const enemy = this.enemies[j];
-        if (!enemy.alive || !enemy.sprite || !enemy.sprite.active) continue;
-
-        const dx = proj.x - enemy.sprite.x;
-        const dy = proj.y - enemy.sprite.y;
-        const hitRadius = 22;
-
-        if (Math.abs(dx) < hitRadius && Math.abs(dy) < hitRadius) {
-          // Hit!
-          this._emitHitExplosion(proj.x, proj.y);
-          this._recycleProjectile(proj);
-          enemy.takeDamage(proj._damage || 30);
-
-          if (!enemy.alive) {
-            this._onEnemyKilled(enemy, j);
-          }
-          break;
-        }
       }
     }
 
@@ -584,6 +581,11 @@ export default class BattleScene extends Phaser.Scene {
     this.enemies.splice(idx, 1);
     this._enemiesLeftInWave = Math.max(0, this._enemiesLeftInWave - 1);
     this._enemiesKilledInWave = (this._enemiesKilledInWave || 0) + 1;
+
+    // Remove the sprite from the physics overlap group
+    if (enemy.sprite) {
+      this.enemiesGroup.remove(enemy.sprite, true);
+    }
 
     const reward = Calculator.goldReward(this.wave);
     this.gold += reward;

@@ -21,6 +21,7 @@ export default class UIScene extends Phaser.Scene {
     this._ointmentReady = true;
     this._ointmentCooldownRemaining = 0;
     this._dragging = null; // currently dragged goose icon
+    this._lastPurchaseTime = 0; // purchase cooldown (0.5 s)
 
     this._buildTitleOverlay(width, height);
     this._buildTopBar(width);
@@ -290,6 +291,10 @@ export default class UIScene extends Phaser.Scene {
   }
 
   _purchaseGoose(laneIndex, dropX) {
+    // Enforce 0.5 s cooldown between purchases
+    if (this.time.now - this._lastPurchaseTime < 500) return;
+    this._lastPurchaseTime = this.time.now;
+
     this._battle.gold -= GOOSE_COST;
     this._goldText.setText(`₴ ${this._battle.gold}`);
     this._battle.placeTower(laneIndex, dropX);
