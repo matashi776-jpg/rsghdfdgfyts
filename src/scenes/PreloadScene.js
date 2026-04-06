@@ -1,6 +1,6 @@
 /**
  * PreloadScene.js
- * Loads all assets; generates fallback textures if files are missing.
+ * Loads all assets for Castle Defense; generates fallback textures on error.
  */
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -8,59 +8,50 @@ export default class PreloadScene extends Phaser.Scene {
   }
 
   preload() {
-    // Show a simple loading bar
     const { width, height } = this.scale;
+
+    // Loading bar
     const barBg = this.add.rectangle(width / 2, height / 2, 300, 20, 0x333333);
     const bar = this.add.rectangle(width / 2 - 150, height / 2, 0, 20, 0x22cc66);
     bar.setOrigin(0, 0.5);
+    this.load.on('progress', (v) => { bar.width = 300 * v; });
 
-    this.load.on('progress', (value) => {
-      bar.width = 300 * value;
-    });
-
-    // Attempt to load real assets – errors are caught gracefully
+    // Graceful fallback: track failed keys
+    this._failedKeys = new Set();
     this.load.on('loaderror', (file) => {
-      console.warn(`Asset not found: ${file.key} (${file.url}) – using fallback`);
+      console.warn(`Asset missing: ${file.key} (${file.url}) — using fallback`);
+      this._failedKeys.add(file.key);
     });
 
-    this.load.image('bg', '/bg.png');
-    this.load.image('hero', '/hero.png');
-    this.load.image('goose', '/goose.png');
-    this.load.image('bureaucrat', '/bureaucrat.png');
-    this.load.image('boss', '/boss.png');
-    this.load.image('borshch', '/borshch.png');
-    this.load.audio('bg_music', '/bgm.mp3');
+    this.load.image('bg',           'bg.png');
+    this.load.image('sergiy',       'sergiy.png');
+    this.load.image('heroine',      'heroine.png');
+    this.load.image('enemy_clerk',  'enemy_clerk.png');
+    this.load.image('enemy_tank',   'enemy_tank.png');
   }
 
   create() {
     this._ensureFallbacks();
-    this.scene.start('KhutirScene');
+    this.scene.start('MenuScene');
   }
 
-  /**
-   * For each key that failed to load (or returned the default missing texture),
-   * generate a simple coloured rectangle texture instead.
-   */
   _ensureFallbacks() {
     const fallbacks = [
-      { key: 'bg', color: 0x0a0a1a, w: 800, h: 600 },
-      { key: 'hero', color: 0xff8800, w: 64, h: 96 },
-      { key: 'goose', color: 0xffffff, w: 48, h: 64 },
-      { key: 'borshch', color: 0xcc1111, w: 16, h: 16 },
-      { key: 'bureaucrat', color: 0x888888, w: 28, h: 38 },
-      { key: 'boss', color: 0x333366, w: 64, h: 80 },
+      { key: 'bg',          color: 0x0a0a1a, w: 800, h: 640 },
+      { key: 'sergiy',      color: 0xff8800, w: 64,  h: 96  },
+      { key: 'heroine',     color: 0xff44aa, w: 64,  h: 96  },
+      { key: 'enemy_clerk', color: 0x888888, w: 48,  h: 64  },
+      { key: 'enemy_tank',  color: 0x334455, w: 80,  h: 64  },
     ];
 
     for (const fb of fallbacks) {
-      if (!this.textures.exists(fb.key) || this.textures.get(fb.key).key === '__MISSING') {
+      if (
+        this._failedKeys.has(fb.key) ||
+        !this.textures.exists(fb.key) ||
+        this.textures.get(fb.key).key === '__MISSING'
+      ) {
         this._makeRect(fb.key, fb.color, fb.w, fb.h);
       }
-    }
-
-    // Always ensure the enemy fallback textures will be available
-    // (they are generated on-demand in Enemy.js, but we register grey here as well)
-    if (!this.textures.exists('enemy_grey')) {
-      this._makeRect('enemy_grey', 0x888888, 28, 38);
     }
   }
 

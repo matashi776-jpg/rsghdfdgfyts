@@ -1,19 +1,19 @@
 /**
  * main.js
- * Phaser 3 game entry point.
+ * Phaser 3 game entry point — Castle Defense Phase 1.
  */
 import Phaser from 'phaser';
 import PreloadScene from './scenes/PreloadScene.js';
-import KhutirScene from './scenes/KhutirScene.js';
+import MenuScene from './scenes/MenuScene.js';
+import StoryScene from './scenes/StoryScene.js';
 import BattleScene from './scenes/BattleScene.js';
 import UIScene from './scenes/UIScene.js';
 
 const config = {
-  type: Phaser.AUTO,
+  type: Phaser.WEBGL,
   width: 800,
-  height: 600,
-  backgroundColor: '#1a1a2e',
-  pixelArt: true,
+  height: 640,
+  backgroundColor: '#000000',
   physics: {
     default: 'arcade',
     arcade: {
@@ -21,7 +21,7 @@ const config = {
       debug: false,
     },
   },
-  scene: [PreloadScene, KhutirScene, BattleScene, UIScene],
+  scene: [PreloadScene, MenuScene, StoryScene, BattleScene, UIScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
