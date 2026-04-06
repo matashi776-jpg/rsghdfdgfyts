@@ -153,28 +153,53 @@ export default class UIScene extends Phaser.Scene {
   // ─── Top Bar ─────────────────────────────────────────────────────────────────
 
   _buildTopBar(width) {
-    this.add.rectangle(width / 2, 22, width, 44, 0x1a237e, 0.82).setDepth(40);
+    // Dark strip behind all panels
+    const strip = this.add.graphics().setDepth(39);
+    strip.fillStyle(0x0d0800, 0.72);
+    strip.fillRect(0, 0, width, 44);
+
+    // Ornate Gold panel
+    const goldGfx = this.add.graphics().setDepth(40);
+    goldGfx.fillStyle(0x1a0a00, 0.92);
+    goldGfx.fillRoundedRect(6, 4, 150, 36, 5);
+    goldGfx.lineStyle(3, 0xb8860b, 1);
+    goldGfx.strokeRoundedRect(6, 4, 150, 36, 5);
+    goldGfx.lineStyle(1, 0xffd700, 0.45);
+    goldGfx.strokeRoundedRect(9, 7, 144, 30, 4);
 
     this._goldText = this.add
-      .text(16, 22, '₴ 0', {
-        fontSize: '18px',
-        fontFamily: 'Arial',
+      .text(81, 22, '₴ 0', {
+        fontSize: '20px',
+        fontFamily: '"Times New Roman", Georgia, serif',
         fontStyle: 'bold',
         color: '#ffd54f',
-        stroke: '#000',
-        strokeThickness: 2,
+        stroke: '#000000',
+        strokeThickness: 4,
+        shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 2, stroke: true, fill: true },
       })
-      .setOrigin(0, 0.5)
+      .setOrigin(0.5, 0.5)
       .setDepth(41);
+
+    // Ornate Wave panel
+    const wavePW = 160;
+    const wavePX = width / 2 - wavePW / 2;
+    const waveGfx = this.add.graphics().setDepth(40);
+    waveGfx.fillStyle(0x1a0a00, 0.92);
+    waveGfx.fillRoundedRect(wavePX, 4, wavePW, 36, 5);
+    waveGfx.lineStyle(3, 0xb8860b, 1);
+    waveGfx.strokeRoundedRect(wavePX, 4, wavePW, 36, 5);
+    waveGfx.lineStyle(1, 0xffd700, 0.45);
+    waveGfx.strokeRoundedRect(wavePX + 3, 7, wavePW - 6, 30, 4);
 
     this._waveText = this.add
       .text(width / 2, 22, 'Wave 1', {
-        fontSize: '18px',
-        fontFamily: 'Arial',
+        fontSize: '20px',
+        fontFamily: '"Times New Roman", Georgia, serif',
         fontStyle: 'bold',
         color: '#e8f5e9',
-        stroke: '#000',
-        strokeThickness: 2,
+        stroke: '#000000',
+        strokeThickness: 4,
+        shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 2, stroke: true, fill: true },
       })
       .setOrigin(0.5, 0.5)
       .setDepth(41);
@@ -183,16 +208,28 @@ export default class UIScene extends Phaser.Scene {
   // ─── Bottom Bar ──────────────────────────────────────────────────────────────
 
   _buildBottomBar(width, height) {
-    this.add
-      .rectangle(width / 2, height - 38, width, 76, 0x263238, 0.88)
-      .setDepth(40);
+    // Ornate dark panel with golden border
+    const barGfx = this.add.graphics().setDepth(40);
+    barGfx.fillStyle(0x0d0800, 0.92);
+    barGfx.fillRect(0, height - 76, width, 76);
+    barGfx.lineStyle(3, 0xb8860b, 1);
+    barGfx.moveTo(0, height - 76);
+    barGfx.lineTo(width, height - 76);
+    barGfx.strokePath();
+    barGfx.lineStyle(1, 0xffd700, 0.35);
+    barGfx.moveTo(0, height - 73);
+    barGfx.lineTo(width, height - 73);
+    barGfx.strokePath();
 
     // Label
     this.add
-      .text(12, height - 60, 'Inventory', {
+      .text(12, height - 62, 'Inventory', {
         fontSize: '11px',
-        fontFamily: 'Arial',
-        color: '#b0bec5',
+        fontFamily: '"Times New Roman", Georgia, serif',
+        fontStyle: 'bold',
+        color: '#c8a96e',
+        stroke: '#000000',
+        strokeThickness: 2,
       })
       .setDepth(41);
   }
@@ -202,49 +239,63 @@ export default class UIScene extends Phaser.Scene {
   _buildDragIcon(width, height) {
     const iconX = 60;
     const iconY = height - 38;
+    const slotW = 64;
+    const slotH = 64;
 
-    // Background slot
-    this.add
-      .rectangle(iconX, iconY, 60, 60, 0x37474f, 0.95)
-      .setDepth(41)
-      .setStrokeStyle(2, 0x78909c);
+    // ── Beveled wood/stone slot using a Container ──────────────────────────────
+    this._slotContainer = this.add.container(iconX, iconY).setDepth(41);
 
-    // Goose icon image (non-interactive, just visual)
-    const gooseImg = this.add
-      .image(iconX, iconY, 'goose')
-      .setScale(0.12)
-      .setDepth(42)
-      .setInteractive({ draggable: false }); // not directly draggable
+    // Draw beveled block (wood/stone aesthetic)
+    const slotGfx = this.add.graphics();
+    // Base fill – dark wood
+    slotGfx.fillStyle(0x3d2609, 1);
+    slotGfx.fillRect(-slotW / 2, -slotH / 2, slotW, slotH);
+    // Inner face – slightly lighter wood
+    slotGfx.fillStyle(0x5c3d14, 1);
+    slotGfx.fillRect(-slotW / 2 + 3, -slotH / 2 + 3, slotW - 6, slotH - 6);
+    // Top-left highlight (light edge)
+    slotGfx.lineStyle(3, 0x9b6e2e, 1);
+    slotGfx.moveTo(-slotW / 2, slotH / 2);
+    slotGfx.lineTo(-slotW / 2, -slotH / 2);
+    slotGfx.lineTo(slotW / 2, -slotH / 2);
+    slotGfx.strokePath();
+    // Bottom-right shadow (dark edge)
+    slotGfx.lineStyle(3, 0x1a0a00, 1);
+    slotGfx.moveTo(slotW / 2, -slotH / 2);
+    slotGfx.lineTo(slotW / 2, slotH / 2);
+    slotGfx.lineTo(-slotW / 2, slotH / 2);
+    slotGfx.strokePath();
+    // Golden inner rim
+    slotGfx.lineStyle(1, 0xb8860b, 0.7);
+    slotGfx.strokeRect(-slotW / 2 + 3, -slotH / 2 + 3, slotW - 6, slotH - 6);
 
-    // Invisible drag region
+    const gooseImg = this.add.image(0, -4, 'goose').setScale(0.12);
+
+    const costLabel = this.add.text(0, 18, `${GOOSE_COST} ₴`, {
+      fontSize: '10px',
+      fontFamily: '"Times New Roman", Georgia, serif',
+      fontStyle: 'bold',
+      color: '#ffd54f',
+      stroke: '#000000',
+      strokeThickness: 2,
+      shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1, fill: true },
+    }).setOrigin(0.5);
+
+    const descLabel = this.add.text(0, 29, 'Стріляє борщем', {
+      fontSize: '8px',
+      fontFamily: '"Times New Roman", Georgia, serif',
+      color: '#c8a96e',
+    }).setOrigin(0.5);
+
+    this._slotContainer.add([slotGfx, gooseImg, costLabel, descLabel]);
+
+    // Invisible drag region (outside container so scaling doesn't affect hit area)
     this._gooseDragZone = this.add
-      .zone(iconX, iconY, 60, 60)
+      .zone(iconX, iconY, slotW, slotH)
       .setInteractive({ draggable: true })
       .setDepth(43);
 
-    // Cost label
-    this.add
-      .text(iconX, iconY + 28, `${GOOSE_COST} ₴`, {
-        fontSize: '10px',
-        fontFamily: 'Arial',
-        color: '#ffd54f',
-        stroke: '#000',
-        strokeThickness: 1,
-      })
-      .setOrigin(0.5)
-      .setDepth(42);
-
-    // Description label
-    this.add
-      .text(iconX, iconY + 40, 'Стріляє борщем', {
-        fontSize: '8px',
-        fontFamily: 'Arial',
-        color: '#b0bec5',
-      })
-      .setOrigin(0.5)
-      .setDepth(42);
-
-    // Create a "ghost" sprite that follows the pointer while dragging
+    // Ghost sprite while dragging
     this._ghostGoose = this.add
       .image(0, 0, 'goose')
       .setScale(0.13)
@@ -259,13 +310,21 @@ export default class UIScene extends Phaser.Scene {
         this._showNotEnoughGold();
         return;
       }
+      // Pressed tween: scale down then snap back
+      this.tweens.add({
+        targets: this._slotContainer,
+        scaleX: 0.92,
+        scaleY: 0.92,
+        duration: 80,
+        yoyo: true,
+        ease: 'Power2',
+      });
       this._ghostGoose.setVisible(true);
       this._ghostGoose.setPosition(pointer.x, pointer.y);
     });
 
     this._gooseDragZone.on('drag', (pointer) => {
       this._ghostGoose.setPosition(pointer.x, pointer.y);
-      // Highlight hovered lane
       this._highlightLane(pointer.y);
     });
 
@@ -332,53 +391,129 @@ export default class UIScene extends Phaser.Scene {
   _buildOintmentButton(width, height) {
     const btnX = width - 90;
     const btnY = height - 38;
+    const btnW = 128;
+    const btnH = 64;
 
+    // ── Beveled stone/wood button (Graphics + Zone) ───────────────────────────
+    this._ointmentGfx = this.add.graphics().setDepth(41);
+    this._ointmentState = 'normal';
+    this._ointmentBtnX = btnX;
+    this._ointmentBtnY = btnY;
+    this._ointmentBtnW = btnW;
+    this._ointmentBtnH = btnH;
+    this._drawOintmentBevel('normal');
+
+    // Hit zone
     this._ointmentBg = this.add
-      .rectangle(btnX, btnY, 120, 60, 0x2e7d32, 0.95)
+      .zone(btnX, btnY, btnW, btnH)
       .setInteractive({ useHandCursor: true })
-      .setDepth(41)
-      .setStrokeStyle(2, 0x66bb6a);
+      .setDepth(42);
 
     this._ointmentLabel = this.add
-      .text(btnX, btnY - 10, '💊 Ointment', {
+      .text(btnX, btnY - 12, '💊 Ointment', {
         fontSize: '12px',
-        fontFamily: 'Arial',
+        fontFamily: '"Times New Roman", Georgia, serif',
         fontStyle: 'bold',
         color: '#c8e6c9',
-        stroke: '#000',
-        strokeThickness: 1,
+        stroke: '#000000',
+        strokeThickness: 2,
+        shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1, fill: true },
       })
       .setOrigin(0.5)
-      .setDepth(42);
+      .setDepth(43);
 
     this._ointmentCostLabel = this.add
-      .text(btnX, btnY + 8, `${OINTMENT_COST} ₴  30s CD`, {
+      .text(btnX, btnY + 6, `${OINTMENT_COST} ₴  30s CD`, {
         fontSize: '10px',
-        fontFamily: 'Arial',
+        fontFamily: '"Times New Roman", Georgia, serif',
         color: '#a5d6a7',
-      })
-      .setOrigin(0.5)
-      .setDepth(42);
-
-    this._ointmentCdText = this.add
-      .text(btnX, btnY + 20, '', {
-        fontSize: '13px',
-        fontFamily: 'Arial',
-        fontStyle: 'bold',
-        color: '#ef9a9a',
-        stroke: '#000',
+        stroke: '#000000',
         strokeThickness: 1,
       })
       .setOrigin(0.5)
       .setDepth(43);
 
-    this._ointmentBg.on('pointerdown', () => this._useOintment());
+    this._ointmentCdText = this.add
+      .text(btnX, btnY + 20, '', {
+        fontSize: '13px',
+        fontFamily: '"Times New Roman", Georgia, serif',
+        fontStyle: 'bold',
+        color: '#ef9a9a',
+        stroke: '#000',
+        strokeThickness: 2,
+        shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1, fill: true },
+      })
+      .setOrigin(0.5)
+      .setDepth(43);
+
+    this._ointmentBg.on('pointerdown', () => {
+      // Pressed tween: shift down 2px, scale 0.95, then snap back
+      this._drawOintmentBevel('pressed');
+      this.tweens.add({
+        targets: [this._ointmentLabel, this._ointmentCostLabel, this._ointmentCdText],
+        y: '+=2',
+        scaleX: 0.95,
+        scaleY: 0.95,
+        duration: 80,
+        yoyo: true,
+        ease: 'Power2',
+        onComplete: () => this._drawOintmentBevel(this._ointmentReady ? 'normal' : 'cooldown'),
+      });
+      this._useOintment();
+    });
     this._ointmentBg.on('pointerover', () => {
-      if (this._ointmentReady) this._ointmentBg.setFillStyle(0x388e3c, 0.95);
+      if (this._ointmentReady) this._drawOintmentBevel('hover');
     });
     this._ointmentBg.on('pointerout', () => {
-      if (this._ointmentReady) this._ointmentBg.setFillStyle(0x2e7d32, 0.95);
+      if (this._ointmentReady) this._drawOintmentBevel('normal');
     });
+  }
+
+  _drawOintmentBevel(state) {
+    const gfx = this._ointmentGfx;
+    const bx = this._ointmentBtnX - this._ointmentBtnW / 2;
+    const by = this._ointmentBtnY - this._ointmentBtnH / 2;
+    const bw = this._ointmentBtnW;
+    const bh = this._ointmentBtnH;
+
+    const baseColors = {
+      normal:  0x2e5c2e,
+      hover:   0x3d7a3d,
+      pressed: 0x1e3e1e,
+      cooldown: 0x3a3a4a,
+    };
+    const edgeColors = {
+      normal:  { hi: 0x5a9a5a, lo: 0x0f2a0f },
+      hover:   { hi: 0x72b472, lo: 0x1a421a },
+      pressed: { hi: 0x0f2a0f, lo: 0x5a9a5a }, // invert for pressed
+      cooldown: { hi: 0x5a5a6e, lo: 0x1a1a28 },
+    };
+
+    gfx.clear();
+    const base = baseColors[state] || baseColors.normal;
+    const edges = edgeColors[state] || edgeColors.normal;
+
+    // Base fill
+    gfx.fillStyle(base, 1);
+    gfx.fillRect(bx, by, bw, bh);
+    // Golden inner glow strip at top
+    gfx.fillStyle(0xb8860b, 0.18);
+    gfx.fillRect(bx + 4, by + 3, bw - 8, 6);
+    // Top-left highlight edge
+    gfx.lineStyle(3, edges.hi, 1);
+    gfx.moveTo(bx, by + bh);
+    gfx.lineTo(bx, by);
+    gfx.lineTo(bx + bw, by);
+    gfx.strokePath();
+    // Bottom-right shadow edge
+    gfx.lineStyle(3, edges.lo, 1);
+    gfx.moveTo(bx + bw, by);
+    gfx.lineTo(bx + bw, by + bh);
+    gfx.lineTo(bx, by + bh);
+    gfx.strokePath();
+    // Outer golden border
+    gfx.lineStyle(2, 0xb8860b, 0.8);
+    gfx.strokeRect(bx, by, bw, bh);
   }
 
   _useOintment() {
@@ -395,7 +530,7 @@ export default class UIScene extends Phaser.Scene {
 
     // Start cooldown
     this._ointmentReady = false;
-    this._ointmentBg.setFillStyle(0x546e7a, 0.95);
+    this._drawOintmentBevel('cooldown');
     this._ointmentCooldownRemaining = OINTMENT_COOLDOWN / 1000;
 
     const tick = this.time.addEvent({
@@ -408,7 +543,7 @@ export default class UIScene extends Phaser.Scene {
         } else {
           this._ointmentCdText.setText('');
           this._ointmentReady = true;
-          this._ointmentBg.setFillStyle(0x2e7d32, 0.95);
+          this._drawOintmentBevel('normal');
         }
       },
     });
@@ -425,12 +560,13 @@ export default class UIScene extends Phaser.Scene {
   _floatingText(x, y, text, color = '#ffd700') {
     const t = this.add
       .text(x, y, text, {
-        fontSize: '14px',
-        fontFamily: 'Arial',
+        fontSize: '15px',
+        fontFamily: '"Times New Roman", Georgia, serif',
         fontStyle: 'bold',
         color,
-        stroke: '#000',
-        strokeThickness: 2,
+        stroke: '#000000',
+        strokeThickness: 3,
+        shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 2, stroke: true, fill: true },
       })
       .setOrigin(0.5)
       .setDepth(60);

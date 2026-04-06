@@ -48,7 +48,12 @@ export default class Enemy {
     this.sprite = scene.physics.add.sprite(x, y, texKey);
     this.sprite.setImmovable(false);
     this.sprite.body.allowGravity = false;
+    this.sprite.setDepth(6);
     this.sprite.enemyRef = this;
+
+    // Drop shadow – semi-transparent oval under the bureaucrat
+    const shadowW = w * 1.6;
+    this._shadow = scene.add.ellipse(x, y + h / 2 + 2, shadowW, 9, 0x000000, 0.35).setDepth(5);
 
     // Health bar (drawn as graphics, updated each frame)
     this.hpBar = scene.add.graphics();
@@ -117,7 +122,60 @@ export default class Enemy {
   die() {
     if (!this.alive) return;
     this.alive = false;
-    this._cleanup();
+
+    // Clean up non-sprite elements immediately
+    if (this.bubbleText) {
+      this.bubbleText.destroy();
+      this.bubbleText = null;
+    }
+    if (this.hpBar) {
+      this.hpBar.destroy();
+      this.hpBar = null;
+    }
+
+    if (this.sprite && this.sprite.active) {
+      // Disable physics so it no longer interacts
+      this.sprite.disableBody(true, false);
+
+      // Defeat animation: spin ~half-turn and fall downward while fading out (500 ms)
+      this.scene.tweens.add({
+        targets: this.sprite,
+        angle: 160, // roughly half rotation for a dramatic topple effect
+        y: this.sprite.y + 70,
+        alpha: 0,
+        duration: 500,
+        ease: 'Power2',
+        onComplete: () => {
+          if (this.sprite) {
+            this.sprite.destroy();
+            this.sprite = null;
+          }
+        },
+      });
+
+      // Shadow fades and shrinks in sync
+      if (this._shadow) {
+        this.scene.tweens.add({
+          targets: this._shadow,
+          alpha: 0,
+          scaleX: 0,
+          scaleY: 0,
+          duration: 400,
+          ease: 'Power2',
+          onComplete: () => {
+            if (this._shadow) {
+              this._shadow.destroy();
+              this._shadow = null;
+            }
+          },
+        });
+      }
+    } else {
+      if (this._shadow) {
+        this._shadow.destroy();
+        this._shadow = null;
+      }
+    }
 
     // Notify scene
     if (this.scene && this.scene.onEnemyDied) {
@@ -133,6 +191,10 @@ export default class Enemy {
     if (this.hpBar) {
       this.hpBar.destroy();
       this.hpBar = null;
+    }
+    if (this._shadow) {
+      this._shadow.destroy();
+      this._shadow = null;
     }
     if (this.sprite && this.sprite.active) {
       this.sprite.disableBody(true, true);
@@ -150,6 +212,14 @@ export default class Enemy {
     // Move left
     this.sprite.setVelocityX(-this.speed);
     this._drawHPBar();
+
+    // Keep shadow grounded under the unit
+    if (this._shadow) {
+      this._shadow.setPosition(
+        this.sprite.x,
+        this.sprite.y + this.sprite.height / 2 + 2
+      );
+    }
 
     // Update speech bubble position
     if (this.bubbleText) {
