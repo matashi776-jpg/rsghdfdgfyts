@@ -1,0 +1,524 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_comment": "ACID KHUTIR — Stage 1 Asset Manifest. Every entry must match a real file under public/assets/.",
+  "version": "1.0.0",
+  "style": "Neon Psychedelic Cyber-Folk",
+  "palette": {
+    "electricBlue":  "#00BFFF",
+    "neonPink":      "#FF00AA",
+    "toxicGreen":    "#39FF14",
+    "ultraViolet":   "#7F00FF",
+    "pureBlack":     "#000000"
+  },
+  "assets": [
+
+    // ── Characters — Player ──────────────────────────────────────────────────
+    {
+      "key":    "player_serhiy_full",
+      "path":   "assets/characters/player/player_serhiy_full.png",
+      "folder": "public/assets/characters/player/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "character",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#сергій-player-hero-player_serhiy"
+    },
+    {
+      "key":    "player_serhiy_idle_{n}",
+      "path":   "assets/characters/player/player_serhiy_idle_{01..12}.png",
+      "folder": "public/assets/characters/player/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "character",
+      "frames": 12,
+      "frame_rate": 10,
+      "prompt_ref": "AI_PROMPTS.md#idle-animation"
+    },
+    {
+      "key":    "player_serhiy_walk_{n}",
+      "path":   "assets/characters/player/player_serhiy_walk_{01..12}.png",
+      "folder": "public/assets/characters/player/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "character",
+      "frames": 12,
+      "frame_rate": 12,
+      "prompt_ref": "AI_PROMPTS.md#walk-animation"
+    },
+    {
+      "key":    "player_serhiy_shoot_{n}",
+      "path":   "assets/characters/player/player_serhiy_shoot_{01..06}.png",
+      "folder": "public/assets/characters/player/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "character",
+      "frames": 6,
+      "frame_rate": 18,
+      "prompt_ref": "AI_PROMPTS.md#shoot-animation"
+    },
+
+    // ── Characters — NPC ─────────────────────────────────────────────────────
+    {
+      "key":    "npc_mykhas_full",
+      "path":   "assets/characters/npc/npc_mykhas_full.png",
+      "folder": "public/assets/characters/npc/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "npc",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#npc-mykhas-npc_mykhas"
+    },
+    {
+      "key":    "npc_babtsya_full",
+      "path":   "assets/characters/npc/npc_babtsya_full.png",
+      "folder": "public/assets/characters/npc/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "npc",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#npc-babtsya-npc_babtsya"
+    },
+
+    // ── Enemies ──────────────────────────────────────────────────────────────
+    {
+      "key":    "enemy_zombie_clerk_full",
+      "path":   "assets/enemies/enemy_zombie_clerk_full.png",
+      "folder": "public/assets/enemies/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "enemy",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#zombie-clerk-enemy_zombie_clerk"
+    },
+    {
+      "key":    "enemy_zombie_clerk_walk_{n}",
+      "path":   "assets/enemies/enemy_zombie_clerk_walk_{01..08}.png",
+      "folder": "public/assets/enemies/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "enemy",
+      "frames": 8,
+      "frame_rate": 8,
+      "prompt_ref": "AI_PROMPTS.md#walk-animation-8-frames"
+    },
+    {
+      "key":    "enemy_archivarius_full",
+      "path":   "assets/enemies/enemy_archivarius_full.png",
+      "folder": "public/assets/enemies/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "enemy",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#archivarius-enemy_archivarius"
+    },
+    {
+      "key":    "enemy_archivarius_attack_{n}",
+      "path":   "assets/enemies/enemy_archivarius_attack_{01..06}.png",
+      "folder": "public/assets/enemies/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "enemy",
+      "frames": 6,
+      "frame_rate": 7,
+      "prompt_ref": "AI_PROMPTS.md#attack-animation-6-frames"
+    },
+    {
+      "key":    "enemy_inspector_full",
+      "path":   "assets/enemies/enemy_inspector_full.png",
+      "folder": "public/assets/enemies/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "enemy",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#inspector-enemy_inspector"
+    },
+    {
+      "key":    "enemy_inspector_slam_{n}",
+      "path":   "assets/enemies/enemy_inspector_slam_{01..06}.png",
+      "folder": "public/assets/enemies/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "enemy",
+      "frames": 6,
+      "frame_rate": 10,
+      "prompt_ref": "AI_PROMPTS.md#slam-animation-6-frames"
+    },
+
+    // ── Boss ─────────────────────────────────────────────────────────────────
+    {
+      "key":    "boss_vakhtersha_full",
+      "path":   "assets/bosses/boss_vakhtersha_full.png",
+      "folder": "public/assets/bosses/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "boss",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#comrade-vakhtersha-boss_vakhtersha"
+    },
+    {
+      "key":    "boss_vakhtersha_phase1_{n}",
+      "path":   "assets/bosses/boss_vakhtersha_phase1_{01..08}.png",
+      "folder": "public/assets/bosses/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "boss",
+      "frames": 8,
+      "frame_rate": 8,
+      "prompt_ref": "AI_PROMPTS.md#phase-1-animation"
+    },
+    {
+      "key":    "boss_vakhtersha_phase2_{n}",
+      "path":   "assets/bosses/boss_vakhtersha_phase2_{01..08}.png",
+      "folder": "public/assets/bosses/",
+      "w": 2048, "h": 2048,
+      "transparent": true,
+      "category": "boss",
+      "frames": 8,
+      "frame_rate": 12,
+      "prompt_ref": "AI_PROMPTS.md#phase-2-animation"
+    },
+
+    // ── Items / Amulets ──────────────────────────────────────────────────────
+    {
+      "key":    "item_radioactive_beet",
+      "path":   "assets/items/item_radioactive_beet.png",
+      "folder": "public/assets/items/",
+      "w": 256, "h": 256,
+      "transparent": true,
+      "category": "item",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#radioactive-beet-item_radioactive_beet"
+    },
+    {
+      "key":    "item_golden_coupon",
+      "path":   "assets/items/item_golden_coupon.png",
+      "folder": "public/assets/items/",
+      "w": 256, "h": 256,
+      "transparent": true,
+      "category": "item",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#golden-coupon-item_golden_coupon"
+    },
+    {
+      "key":    "item_iron_seal",
+      "path":   "assets/items/item_iron_seal.png",
+      "folder": "public/assets/items/",
+      "w": 256, "h": 256,
+      "transparent": true,
+      "category": "item",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#iron-seal-item_iron_seal"
+    },
+    {
+      "key":    "item_tryzub_fragment",
+      "path":   "assets/items/item_tryzub_fragment.png",
+      "folder": "public/assets/items/",
+      "w": 256, "h": 256,
+      "transparent": true,
+      "category": "item",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#tryzub-fragment-item_tryzub_fragment"
+    },
+
+    // ── Perk Icons ───────────────────────────────────────────────────────────
+    {
+      "key":    "ui_icon_damage_up",
+      "path":   "assets/ui/ui_icon_damage_up.png",
+      "folder": "public/assets/ui/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#perk-damage-up-ui_icon_damage_up"
+    },
+    {
+      "key":    "ui_icon_speed_up",
+      "path":   "assets/ui/ui_icon_speed_up.png",
+      "folder": "public/assets/ui/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#perk-speed-up-ui_icon_speed_up"
+    },
+    {
+      "key":    "ui_icon_hp_restore",
+      "path":   "assets/ui/ui_icon_hp_restore.png",
+      "folder": "public/assets/ui/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#perk-hp-restore-ui_icon_hp_restore"
+    },
+    {
+      "key":    "ui_icon_fire_rate",
+      "path":   "assets/ui/ui_icon_fire_rate.png",
+      "folder": "public/assets/ui/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#perk-fire-rate-ui_icon_fire_rate"
+    },
+    {
+      "key":    "ui_icon_shield",
+      "path":   "assets/ui/ui_icon_shield.png",
+      "folder": "public/assets/ui/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#perk-shield-ui_icon_shield"
+    },
+
+    // ── FX ───────────────────────────────────────────────────────────────────
+    {
+      "key":    "fx_bullet_blue",
+      "path":   "assets/fx/fx_bullet_blue.png",
+      "folder": "public/assets/fx/",
+      "w": 128, "h": 64,
+      "transparent": true,
+      "category": "fx",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#bullet-electric-blue-fx_bullet_blue"
+    },
+    {
+      "key":    "fx_hit_pink",
+      "path":   "assets/fx/fx_hit_pink.png",
+      "folder": "public/assets/fx/",
+      "w": 256, "h": 256,
+      "transparent": true,
+      "category": "fx",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#hit-flash-neon-pink-fx_hit_pink"
+    },
+    {
+      "key":    "fx_explosion_pysanka",
+      "path":   "assets/fx/fx_explosion_pysanka.png",
+      "folder": "public/assets/fx/",
+      "w": 512, "h": 512,
+      "transparent": true,
+      "category": "fx",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#explosion-pysanka-folk-fx_explosion_pysanka"
+    },
+    {
+      "key":    "fx_boss_glitch_storm",
+      "path":   "assets/fx/fx_boss_glitch_storm.png",
+      "folder": "public/assets/fx/",
+      "w": 512, "h": 512,
+      "transparent": true,
+      "category": "fx",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#boss-glitch-storm-fx_boss_glitch_storm"
+    },
+
+    // ── UI ───────────────────────────────────────────────────────────────────
+    {
+      "key":    "ui_button_start",
+      "path":   "assets/ui/ui_button_start.png",
+      "folder": "public/assets/ui/",
+      "w": 320, "h": 72,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#start-button-ui_button_start"
+    },
+    {
+      "key":    "ui_hp_bar",
+      "path":   "assets/ui/ui_hp_bar.png",
+      "folder": "public/assets/ui/",
+      "w": 400, "h": 36,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#hp-bar-ui_hp_bar"
+    },
+    {
+      "key":    "ui_wave_counter",
+      "path":   "assets/ui/ui_wave_counter.png",
+      "folder": "public/assets/ui/",
+      "w": 240, "h": 52,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#wave-counter-ui_wave_counter"
+    },
+    {
+      "key":    "ui_perk_card",
+      "path":   "assets/ui/ui_perk_card.png",
+      "folder": "public/assets/ui/",
+      "w": 200, "h": 280,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#perk-card-ui_perk_card"
+    },
+    {
+      "key":    "ui_dialog_box",
+      "path":   "assets/ui/ui_dialog_box.png",
+      "folder": "public/assets/ui/",
+      "w": 800, "h": 176,
+      "transparent": true,
+      "category": "ui",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#dialog-box-ui_dialog_box"
+    },
+
+    // ── Locations ────────────────────────────────────────────────────────────
+    {
+      "key":    "location_khutir_day",
+      "path":   "assets/locations/location_khutir_day.png",
+      "folder": "public/assets/locations/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "location",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#khutir-day-location_khutir_day"
+    },
+    {
+      "key":    "location_khutir_night",
+      "path":   "assets/locations/location_khutir_night.png",
+      "folder": "public/assets/locations/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "location",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#khutir-night-location_khutir_night"
+    },
+    {
+      "key":    "location_forest_neon",
+      "path":   "assets/locations/location_forest_neon.png",
+      "folder": "public/assets/locations/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "location",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#neon-forest-location_forest_neon"
+    },
+    {
+      "key":    "location_field_sunflowers",
+      "path":   "assets/locations/location_field_sunflowers.png",
+      "folder": "public/assets/locations/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "location",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#sunflower-field-location_field_sunflowers"
+    },
+    {
+      "key":    "location_boss_arena",
+      "path":   "assets/locations/location_boss_arena.png",
+      "folder": "public/assets/locations/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "location",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#boss-arena-location_boss_arena"
+    },
+
+    // ── Symbols ──────────────────────────────────────────────────────────────
+    {
+      "key":    "symbol_pysanka_glow",
+      "path":   "assets/symbols/symbol_pysanka_glow.png",
+      "folder": "public/assets/symbols/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "symbol",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#pysanka-glow-symbol_pysanka_glow"
+    },
+    {
+      "key":    "symbol_vyshyvanka_knot",
+      "path":   "assets/symbols/symbol_vyshyvanka_knot.png",
+      "folder": "public/assets/symbols/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "symbol",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#vyshyvanka-knot-symbol_vyshyvanka_knot"
+    },
+    {
+      "key":    "symbol_rushnyk_cross",
+      "path":   "assets/symbols/symbol_rushnyk_cross.png",
+      "folder": "public/assets/symbols/",
+      "w": 128, "h": 128,
+      "transparent": true,
+      "category": "symbol",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#rushnyk-cross-symbol_rushnyk_cross"
+    },
+
+    // ── Cutscenes ────────────────────────────────────────────────────────────
+    {
+      "key":    "cutscene_intro_01",
+      "path":   "assets/cutscenes/cutscene_intro_01.png",
+      "folder": "public/assets/cutscenes/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "cutscene",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#intro-panel-1-cutscene_intro_01"
+    },
+    {
+      "key":    "cutscene_intro_02",
+      "path":   "assets/cutscenes/cutscene_intro_02.png",
+      "folder": "public/assets/cutscenes/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "cutscene",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#intro-panel-2-cutscene_intro_02"
+    },
+    {
+      "key":    "cutscene_boss_arrival",
+      "path":   "assets/cutscenes/cutscene_boss_arrival.png",
+      "folder": "public/assets/cutscenes/",
+      "w": 1280, "h": 720,
+      "transparent": false,
+      "category": "cutscene",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#boss-arrival-cutscene_boss_arrival"
+    },
+
+    // ── Comics ───────────────────────────────────────────────────────────────
+    {
+      "key":    "comic_panel_01",
+      "path":   "assets/comics/comic_panel_01.png",
+      "folder": "public/assets/comics/",
+      "w": 800, "h": 600,
+      "transparent": false,
+      "category": "comic",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#comic-panel-01-comic_panel_01"
+    },
+    {
+      "key":    "comic_panel_02",
+      "path":   "assets/comics/comic_panel_02.png",
+      "folder": "public/assets/comics/",
+      "w": 800, "h": 600,
+      "transparent": false,
+      "category": "comic",
+      "frames": 1,
+      "prompt_ref": "AI_PROMPTS.md#comic-panel-02-comic_panel_02"
+    }
+
+  ],
+
+  "total_files": 85,
+  "summary": {
+    "characters_player": 31,
+    "characters_npc":     2,
+    "enemies":           23,
+    "boss":              17,
+    "items_amulets":      4,
+    "perk_icons":         5,
+    "fx":                 4,
+    "ui":                 5,
+    "locations":          5,
+    "symbols":            3,
+    "cutscenes":          3,
+    "comics":             2
+  }
+}
