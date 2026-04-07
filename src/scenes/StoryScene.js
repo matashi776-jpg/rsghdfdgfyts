@@ -135,7 +135,7 @@ export default class StoryScene extends Phaser.Scene {
     });
 
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('BattleScene');
+      this.scene.start('HeroSelectScene');
     });
   }
 }

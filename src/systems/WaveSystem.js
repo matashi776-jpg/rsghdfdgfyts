@@ -54,14 +54,31 @@ export default class WaveSystem {
   _spawnEnemyForWave(wave) {
     let type;
     const roll = Math.random();
+
     if (wave === 1) {
-      type = 'zombie_clerk';
+      // Wave 1: basic enemies only
+      type = roll < 0.7 ? 'zombie_clerk' : 'retro_enforcer';
     } else if (wave === 2) {
-      type = roll < 0.6 ? 'zombie_clerk' : 'archivarius';
+      // Wave 2: introduce ranged herald
+      if (roll < 0.45)      type = 'zombie_clerk';
+      else if (roll < 0.70) type = 'archivarius';
+      else if (roll < 0.90) type = 'retro_enforcer';
+      else                  type = 'propaganda_herald';
+    } else if (wave === 3) {
+      // Wave 3: all mid-tier types
+      if (roll < 0.25)      type = 'zombie_clerk';
+      else if (roll < 0.45) type = 'archivarius';
+      else if (roll < 0.62) type = 'retro_enforcer';
+      else if (roll < 0.80) type = 'propaganda_herald';
+      else                  type = 'inspector';
     } else {
-      if (roll < 0.4)      type = 'zombie_clerk';
-      else if (roll < 0.7) type = 'archivarius';
-      else                 type = 'inspector';
+      // Wave 4+: full roster including Factory Warden
+      if (roll < 0.20)      type = 'zombie_clerk';
+      else if (roll < 0.36) type = 'archivarius';
+      else if (roll < 0.50) type = 'retro_enforcer';
+      else if (roll < 0.64) type = 'propaganda_herald';
+      else if (roll < 0.82) type = 'inspector';
+      else                  type = 'factory_warden';
     }
 
     this.scene.spawnEnemy?.(type);

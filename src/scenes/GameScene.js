@@ -2,15 +2,20 @@
  * GameScene.js
  * Main gameplay scene for ACID KHUTIR — Stage 1
  */
-import WaveSystem      from '../systems/WaveSystem.js';
+import WaveSystem       from '../systems/WaveSystem.js';
 import ProjectileSystem from '../systems/ProjectileSystem.js';
-import FXSystem        from '../systems/FXSystem.js';
-import UISystem        from '../systems/UISystem.js';
-import PerkSystem      from '../systems/PerkSystem.js';
-import Player          from '../entities/Player.js';
-import ZombieClerk     from '../entities/ZombieClerk.js';
-import Archivarius     from '../entities/Archivarius.js';
-import Inspector       from '../entities/Inspector.js';
+import FXSystem         from '../systems/FXSystem.js';
+import UISystem         from '../systems/UISystem.js';
+import PerkSystem       from '../systems/PerkSystem.js';
+import Player           from '../entities/Player.js';
+import HeroOlena        from '../entities/HeroOlena.js';
+import HeroMykhas       from '../entities/HeroMykhas.js';
+import ZombieClerk      from '../entities/ZombieClerk.js';
+import Archivarius      from '../entities/Archivarius.js';
+import Inspector        from '../entities/Inspector.js';
+import RetroEnforcer    from '../entities/RetroEnforcer.js';
+import PropagandaHerald from '../entities/PropagandaHerald.js';
+import FactoryWarden    from '../entities/FactoryWarden.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -18,17 +23,25 @@ export default class GameScene extends Phaser.Scene {
   }
 
   init(data) {
-    this.wave      = data?.wave  ?? 1;
-    this.score     = data?.score ?? 0;
-    this.perks     = data?.perks ?? [];
+    this.wave      = data?.wave    ?? 1;
+    this.score     = data?.score   ?? 0;
+    this.perks     = data?.perks   ?? [];
+    this.heroKey   = data?.heroKey ?? 'serhiy';
     this.gameOver  = false;
   }
 
   create() {
     const { width, height } = this.scale;
 
+    // Choose background per hero — Lanchyn city or forest fields
+    const bgKey = this.heroKey === 'olena'
+      ? 'location_forest_neon'
+      : this.heroKey === 'mykhas'
+        ? 'location_lanchin_city'
+        : 'location_khutir_day';
+
     // Background location
-    this.add.image(width / 2, height / 2, 'location_khutir_day')
+    this.add.image(width / 2, height / 2, bgKey)
       .setDisplaySize(width, height);
 
     // Systems
@@ -38,8 +51,12 @@ export default class GameScene extends Phaser.Scene {
     this.uiSystem         = new UISystem(this);
     this.waveSystem       = new WaveSystem(this);
 
-    // Player
-    this.player = new Player(this, width * 0.15, height * 0.5);
+    // Player — spawn correct hero based on selection
+    switch (this.heroKey) {
+      case 'olena':  this.player = new HeroOlena(this,  width * 0.15, height * 0.5); break;
+      case 'mykhas': this.player = new HeroMykhas(this, width * 0.15, height * 0.5); break;
+      default:       this.player = new Player(this,     width * 0.15, height * 0.5); break;
+    }
 
     // Enemy groups
     this.enemies = this.physics.add.group();
@@ -110,9 +127,12 @@ export default class GameScene extends Phaser.Scene {
     const spawnX = x ?? this.scale.width + 60;
 
     switch (type) {
-      case 'archivarius': enemy = new Archivarius(this, spawnX, spawnY); break;
-      case 'inspector':   enemy = new Inspector(this,   spawnX, spawnY); break;
-      default:            enemy = new ZombieClerk(this, spawnX, spawnY); break;
+      case 'archivarius':       enemy = new Archivarius(this,      spawnX, spawnY); break;
+      case 'inspector':         enemy = new Inspector(this,         spawnX, spawnY); break;
+      case 'retro_enforcer':    enemy = new RetroEnforcer(this,    spawnX, spawnY); break;
+      case 'propaganda_herald': enemy = new PropagandaHerald(this, spawnX, spawnY); break;
+      case 'factory_warden':    enemy = new FactoryWarden(this,    spawnX, spawnY); break;
+      default:                  enemy = new ZombieClerk(this,      spawnX, spawnY); break;
     }
 
     this.enemies.add(enemy, true);
