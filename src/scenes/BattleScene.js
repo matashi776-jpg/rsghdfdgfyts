@@ -9,7 +9,10 @@
  *  - Neon projectile trails (pink/orange additive particles)
  *  - House tiers with gameplay bonuses
  *  - Neon visual style throughout
+ *  - V4.1: AnimSystem for hero idle bobs, spell circles, and wall glow per upgrade
  */
+import AnimSystem from '../systems/AnimSystem.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -154,6 +157,23 @@ export default class BattleScene extends Phaser.Scene {
 
     // ── Launch persistent UI overlay ────────────────────────────────────────
     this.scene.launch('UIScene');
+
+    // ── AnimSystem — idle bobs for defenders ─────────────────────────────────
+    this.animSystem = new AnimSystem(this);
+    for (const def of this.defendersGroup.getChildren()) {
+      this.animSystem.addIdleBob(def, {
+        amplitude: 4,
+        duration:  1600 + Math.random() * 600,
+        phase:     Math.random() * 800,
+      });
+      this.animSystem.addBreath(def, 0.04, 2000 + Math.random() * 400);
+    }
+
+    // ── Wall neon glow overlay (intensity grows per upgrade) ─────────────────
+    this._wallGlow = this.add.graphics().setDepth(4);
+    this._updateWallGlow();
+
+    this.cameras.main.fadeIn(600);
   }
 
   // ─── House Upgrade ────────────────────────────────────────────────────────
@@ -179,6 +199,62 @@ export default class BattleScene extends Phaser.Scene {
     const newH = 200 + (this.houseLevel - 1) * 20;
     this.house.setDisplaySize(newW, newH);
     this.house.refreshBody();
+
+    // Visual: wall glow intensifies, bounce, enemy retreat, FX burst
+    this._updateWallGlow();
+    if (this.animSystem) {
+      this.animSystem.playUpgradeBounce(this.house);
+      this.animSystem.playEnemyRetreat(this.enemiesGroup, 100 + this.houseLevel * 30);
+    }
+    // FX wall burst
+    const fxColors = [0xffffff, 0x00ffff, 0xff00aa];
+    const fxCol    = fxColors[Math.min(this.houseLevel - 1, fxColors.length - 1)];
+    if (this._spawnHitParticle) {
+      // Use house position for the burst origin
+      const em = this.add.particles(this.house.x, this.house.y, 'particle_neon_cyan', {
+        speed:    { min: 80, max: 380 },
+        scale:    { start: 2.0, end: 0 },
+        alpha:    { start: 1,   end: 0 },
+        lifespan: { min: 400, max: 900 },
+        angle:    { min: 0, max: 360 },
+        tint:     [fxCol, 0xffffff, 0xffff00],
+        emitting: false,
+      }).setDepth(18);
+      em.explode(50, this.house.x, this.house.y);
+      this.time.delayedCall(1100, () => { if (em.active) em.destroy(); });
+    }
+    // Screen flash in upgrade color
+    const col = Phaser.Display.Color.IntegerToColor(fxCol);
+    this.cameras.main.flash(280, col.red, col.green, col.blue, false);
+    this.cameras.main.shake(120, 0.008);
+  }
+
+  // ─── Wall neon glow overlay (redrawn on each upgrade) ────────────────────
+
+  _updateWallGlow() {
+    if (!this._wallGlow) return;
+    this._wallGlow.clear();
+    const glowColors = [0x8800ff, 0x00ffff, 0xff00aa]; // level 1/2/3
+    const color = glowColors[Math.min(this.houseLevel - 1, glowColors.length - 1)];
+    const intensity = 0.18 + (this.houseLevel - 1) * 0.12; // grows per level
+    // Halo around the house
+    this._wallGlow.fillStyle(color, intensity);
+    this._wallGlow.fillEllipse(
+      this.house.x,
+      this.house.y,
+      this.house.displayWidth  * 2.4,
+      this.house.displayHeight * 1.6,
+    );
+    // Pulsing aura tween (re-start each upgrade)
+    if (this._wallGlowTween) this._wallGlowTween.stop();
+    this._wallGlowTween = this.tweens.add({
+      targets:  this._wallGlow,
+      alpha:    0.4,
+      duration: 800 - (this.houseLevel - 1) * 120, // faster pulse at higher level
+      yoyo:     true,
+      repeat:   -1,
+      ease:     'Sine.easeInOut',
+    });
   }
 
   _spawnUpgradeParticles() {
@@ -337,6 +413,17 @@ export default class BattleScene extends Phaser.Scene {
     const damage = Math.floor(20 * this.modifiers.damage);
     enemy.hp -= damage;
     this._spawnHitParticle(proj.x, proj.y);
+
+    // Occasionally spawn a glitch effect on hit (acid splash perk)
+    if (this.modifiers.acidSplash && Math.random() < 0.4) {
+      // Lazy-import: FXSystem methods available via scene if GameScene also uses it
+      const fxS = this.fxSystemBattle;
+      if (fxS) {
+        fxS.spawnToxic(enemy.x, enemy.y);
+        fxS.spawnGlyph(enemy.x, enemy.y, 0x00ff44);
+      }
+    }
+
     if (proj.particleTrail) {
       proj.particleTrail.stopFollow();
       this.time.delayedCall(260, () => {
@@ -412,6 +499,11 @@ export default class BattleScene extends Phaser.Scene {
       if (d < minDist) { minDist = d; target = e; }
     }
     if (!target || minDist > 700 * 700) return;
+
+    // Spell cast circle at the defender's position (magic effect)
+    if (Math.random() < 0.25 && this.animSystem) {
+      this.animSystem.playSpellCast(defender.x, defender.y, 0xff00aa);
+    }
 
     const proj = this.projectilesGroup.create(defender.x + 22, defender.y, 'particle_neon_pink');
     if (!proj) return;
