@@ -11,6 +11,9 @@ import Player          from '../entities/Player.js';
 import ZombieClerk     from '../entities/ZombieClerk.js';
 import Archivarius     from '../entities/Archivarius.js';
 import Inspector       from '../entities/Inspector.js';
+import RetroEnforcer   from '../entities/RetroEnforcer.js';
+import PropagandaHerald from '../entities/PropagandaHerald.js';
+import FactoryWarden   from '../entities/FactoryWarden.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -110,9 +113,12 @@ export default class GameScene extends Phaser.Scene {
     const spawnX = x ?? this.scale.width + 60;
 
     switch (type) {
-      case 'archivarius': enemy = new Archivarius(this, spawnX, spawnY); break;
-      case 'inspector':   enemy = new Inspector(this,   spawnX, spawnY); break;
-      default:            enemy = new ZombieClerk(this, spawnX, spawnY); break;
+      case 'archivarius':        enemy = new Archivarius(this, spawnX, spawnY);       break;
+      case 'inspector':          enemy = new Inspector(this,   spawnX, spawnY);       break;
+      case 'retro_enforcer':     enemy = new RetroEnforcer(this, spawnX, spawnY);     break;
+      case 'propaganda_herald':  enemy = new PropagandaHerald(this, spawnX, spawnY);  break;
+      case 'factory_warden':     enemy = new FactoryWarden(this, spawnX, spawnY);     break;
+      default:                   enemy = new ZombieClerk(this, spawnX, spawnY);       break;
     }
 
     this.enemies.add(enemy, true);

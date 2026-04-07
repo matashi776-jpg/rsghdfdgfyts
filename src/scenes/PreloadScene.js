@@ -99,6 +99,21 @@ export default class PreloadScene extends Phaser.Scene {
       const n = String(i).padStart(2, '0');
       this.load.image(`enemy_inspector_slam_${n}`, `${EN}enemy_inspector_slam_${n}.png`);
     }
+    this.load.image('enemy_retro_enforcer_full', `${EN}enemy_retro_enforcer_full.png`);
+    for (let i = 1; i <= 8; i++) {
+      const n = String(i).padStart(2, '0');
+      this.load.image(`enemy_retro_enforcer_walk_${n}`, `${EN}enemy_retro_enforcer_walk_${n}.png`);
+    }
+    this.load.image('enemy_propaganda_herald_full', `${EN}enemy_propaganda_herald_full.png`);
+    for (let i = 1; i <= 8; i++) {
+      const n = String(i).padStart(2, '0');
+      this.load.image(`enemy_propaganda_herald_walk_${n}`, `${EN}enemy_propaganda_herald_walk_${n}.png`);
+    }
+    this.load.image('enemy_factory_warden_full', `${EN}enemy_factory_warden_full.png`);
+    for (let i = 1; i <= 8; i++) {
+      const n = String(i).padStart(2, '0');
+      this.load.image(`enemy_factory_warden_walk_${n}`, `${EN}enemy_factory_warden_walk_${n}.png`);
+    }
 
     // ── Stage 1 — Boss ─────────────────────────────────────────────────────
     const BS = 'assets/bosses/';
@@ -205,6 +220,21 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'enemy_inspector_full', color: 0x112233, w: 80, h: 100 },
       ...[...Array(6)].map((_, i) => ({
         key: `enemy_inspector_slam_${String(i + 1).padStart(2, '0')}`, color: 0x113344, w: 80, h: 100,
+      })),
+      // Retro Enforcer (cyan vein glow)
+      { key: 'enemy_retro_enforcer_full', color: 0x003355, w: 72, h: 100 },
+      ...[...Array(8)].map((_, i) => ({
+        key: `enemy_retro_enforcer_walk_${String(i + 1).padStart(2, '0')}`, color: 0x004466, w: 72, h: 100,
+      })),
+      // Propaganda Herald (yellow-green)
+      { key: 'enemy_propaganda_herald_full', color: 0x335500, w: 60, h: 88 },
+      ...[...Array(8)].map((_, i) => ({
+        key: `enemy_propaganda_herald_walk_${String(i + 1).padStart(2, '0')}`, color: 0x446600, w: 60, h: 88,
+      })),
+      // Factory Warden (toxic green, large)
+      { key: 'enemy_factory_warden_full', color: 0x003322, w: 96, h: 120 },
+      ...[...Array(8)].map((_, i) => ({
+        key: `enemy_factory_warden_walk_${String(i + 1).padStart(2, '0')}`, color: 0x004433, w: 96, h: 120,
       })),
       // Boss
       { key: 'boss_vakhtersha_full', color: 0x440066, w: 120, h: 140 },

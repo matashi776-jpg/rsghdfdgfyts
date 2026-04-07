@@ -58,10 +58,20 @@ export default class WaveSystem {
       type = 'zombie_clerk';
     } else if (wave === 2) {
       type = roll < 0.6 ? 'zombie_clerk' : 'archivarius';
+    } else if (wave === 3) {
+      if (roll < 0.30)       type = 'zombie_clerk';
+      else if (roll < 0.55)  type = 'archivarius';
+      else if (roll < 0.75)  type = 'inspector';
+      else if (roll < 0.90)  type = 'retro_enforcer';
+      else                   type = 'propaganda_herald';
     } else {
-      if (roll < 0.4)      type = 'zombie_clerk';
-      else if (roll < 0.7) type = 'archivarius';
-      else                 type = 'inspector';
+      // Wave 4+: full roster with factory warden
+      if (roll < 0.20)       type = 'zombie_clerk';
+      else if (roll < 0.38)  type = 'archivarius';
+      else if (roll < 0.54)  type = 'inspector';
+      else if (roll < 0.68)  type = 'retro_enforcer';
+      else if (roll < 0.84)  type = 'propaganda_herald';
+      else                   type = 'factory_warden';
     }
 
     this.scene.spawnEnemy?.(type);
