@@ -264,7 +264,7 @@ export default class AmuletSystem {
 
     // Description
     const descTxt = this.scene.add.text(cx - 120, cy - 20, data.desc, {
-      fontFamily: 'Arial, Arial',
+      fontFamily: 'Arial, sans-serif',
       fontSize:   '12px',
       color:      '#cccccc',
       wordWrap:   { width: 240 },

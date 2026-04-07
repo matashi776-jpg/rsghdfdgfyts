@@ -2,6 +2,10 @@
  * Player.js
  * Player entity — Serhiy — ACID KHUTIR Stage 1
  */
+
+/** Half-angle spread (radians) used for the ritual burst-fire (≈15°). */
+const RITUAL_BURST_SPREAD = 0.26;
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'player_serhiy_idle_01');
@@ -68,8 +72,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Ritual burst: triple spread shot
         if (ps && Math.random() < this.ritualChance) {
-          const spread = 0.26; // ~15 degrees
-          ps.fireBurst(this.x, this.y, angle, spread, this.explosiveBullets);
+          ps.fireBurst(this.x, this.y, angle, RITUAL_BURST_SPREAD, this.explosiveBullets);
         } else if (ps) {
           ps.fire(this.x, this.y, angle, this.explosiveBullets);
         }

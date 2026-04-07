@@ -68,7 +68,7 @@ export default class UISystem {
     // Update amulet / vyshyvanka stats
     const resist = Math.round((player.resistance ?? 0) * 100);
     const count  = (player.amulets ?? []).length;
-    const vysh   = player.vyshyvankaCount ?? 1;
+    const vysh   = player.vyshyvankaCount ?? 0;
     if (resist > 0 || count > 0) {
       this._amuletTxt?.setText(
         `🛡${resist}%  ✦${count}  👘${vysh}`
