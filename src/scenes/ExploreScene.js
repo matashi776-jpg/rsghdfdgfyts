@@ -5,6 +5,8 @@
  * Player explores Lanchyn city districts, finds ritual points,
  * upgrades the city cordon, and proceeds to TacticalBattleScene.
  */
+
+const CITY_UPGRADE_COSTS = [0, 200, 400, 800]; // cost per level (index = current level)
 export default class ExploreScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ExploreScene' });
@@ -328,8 +330,7 @@ export default class ExploreScene extends Phaser.Scene {
   // ─── City Upgrade ─────────────────────────────────────────────────────────
 
   _buildCityUpgradePanel(width, height) {
-    const costs     = [0, 200, 400, 800];
-    const upgradeCost = costs[Math.min(this.cordonLevel, costs.length - 1)];
+    const upgradeCost = CITY_UPGRADE_COSTS[Math.min(this.cordonLevel, CITY_UPGRADE_COSTS.length - 1)];
     const maxed       = this.cordonLevel >= 3;
     const canAfford   = !maxed && this.resources.money >= upgradeCost;
 

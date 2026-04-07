@@ -17,6 +17,11 @@ const CH   = 76;  // cell height
 const OX   = 60;  // grid origin X
 const OY   = 80;  // grid origin Y
 
+const MAX_ENEMY_SPEED       = 3;   // upper bound when restoring slowed enemy speed
+const ENEMY_SCALE_INTERVAL  = 3;   // battle-rounds between each enemy strength increase
+
+let _enemyIdCounter = 0; // module-level counter for unique enemy IDs
+
 // ─── Hero spell catalogue ────────────────────────────────────────────────────
 const SPELLS = {
   serhiy: [
@@ -143,7 +148,6 @@ export default class TacticalBattleScene extends Phaser.Scene {
     // Wave 1+ : clerks
     add(this._mkEnemy('clerk',       'Клерк',       '👔', 60,  15, 5, 2, 8, 1, 0xaa44ff, 20, 'aggressive', scale, slowMult, weakMult));
     add(this._mkEnemy('clerk',       'Клерк',       '👔', 60,  15, 5, 2, 8, 4, 0xaa44ff, 20, 'aggressive', scale, slowMult, weakMult));
-
     if (this.round >= 2) {
       add(this._mkEnemy('archivarius', 'Архіваріус', '📚', 100, 20, 12, 1, 9, 2, 0xff8800, 35, 'ranged',    scale, slowMult, weakMult));
     }
@@ -158,7 +162,7 @@ export default class TacticalBattleScene extends Phaser.Scene {
   _mkEnemy(type, name, icon, hp, atk, def, spd, col, row, color, xpVal, tactics, scale, slowMult, weakMult) {
     const scaledHP  = Math.floor(hp  * scale);
     return {
-      id:      `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      id:      `${type}_${++_enemyIdCounter}`,
       type, name, icon, color,
       hp:      scaledHP,
       maxHp:   scaledHP,
@@ -713,7 +717,7 @@ export default class TacticalBattleScene extends Phaser.Scene {
     for (const enemy of this.enemies) {
       enemy.status = (enemy.status ?? []).filter(s => {
         s.dur--;
-        if (s.dur <= 0 && s.type === 'slowed') enemy.speed = Math.min(enemy.speed + 1, 3);
+        if (s.dur <= 0 && s.type === 'slowed') enemy.speed = Math.min(enemy.speed + 1, MAX_ENEMY_SPEED);
         return s.dur > 0;
       });
     }
@@ -721,8 +725,8 @@ export default class TacticalBattleScene extends Phaser.Scene {
     // Passive income
     this.resources.money = (this.resources.money ?? 0) + Math.floor(10 * (this.modifiers.income ?? 1));
 
-    // Enemy scaling every 3 battle-rounds
-    if (this.battleRound % 3 === 0) {
+    // Enemy scaling every ENEMY_SCALE_INTERVAL battle-rounds
+    if (this.battleRound % ENEMY_SCALE_INTERVAL === 0) {
       for (const e of this.enemies.filter(e => e.hp > 0)) {
         e.atk = Math.floor(e.atk * 1.1);
         e.hp  = Math.min(e.maxHp, e.hp + Math.floor(e.maxHp * 0.05));

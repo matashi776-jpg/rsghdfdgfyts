@@ -5,6 +5,8 @@
  * Player performs a ritual at a ritual point. Resources are consumed.
  * Two choices: buff player OR debuff enemies. Interrupt risk if too slow.
  */
+
+const INTERRUPT_TIMEOUT_MS = 15000; // 15 seconds for the player to choose
 export default class RitualScene extends Phaser.Scene {
   constructor() {
     super({ key: 'RitualScene' });
@@ -237,7 +239,7 @@ export default class RitualScene extends Phaser.Scene {
   _startInterruptTimer(width, height) {
     const barY    = height - 52;
     const barW    = 400;
-    const total   = 15000;
+    const total   = INTERRUPT_TIMEOUT_MS;
     let elapsed   = 0;
 
     this.add.text(width / 2, barY - 20, '⚠ Ризик переривання:', {
