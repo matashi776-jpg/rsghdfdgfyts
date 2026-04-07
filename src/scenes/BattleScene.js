@@ -12,6 +12,7 @@
  *  - V4.1: AnimSystem for hero idle bobs, spell circles, and wall glow per upgrade
  */
 import AnimSystem from '../systems/AnimSystem.js';
+import FXSystem   from '../systems/FXSystem.js';
 
 export default class BattleScene extends Phaser.Scene {
   constructor() {
@@ -159,7 +160,8 @@ export default class BattleScene extends Phaser.Scene {
     this.scene.launch('UIScene');
 
     // ── AnimSystem — idle bobs for defenders ─────────────────────────────────
-    this.animSystem = new AnimSystem(this);
+    this.animSystem      = new AnimSystem(this);
+    this.fxSystemBattle  = new FXSystem(this);
     for (const def of this.defendersGroup.getChildren()) {
       this.animSystem.addIdleBob(def, {
         amplitude: 4,
@@ -416,11 +418,10 @@ export default class BattleScene extends Phaser.Scene {
 
     // Occasionally spawn a glitch effect on hit (acid splash perk)
     if (this.modifiers.acidSplash && Math.random() < 0.4) {
-      // Lazy-import: FXSystem methods available via scene if GameScene also uses it
-      const fxS = this.fxSystemBattle;
-      if (fxS) {
-        fxS.spawnToxic(enemy.x, enemy.y);
-        fxS.spawnGlyph(enemy.x, enemy.y, 0x00ff44);
+      const fxSystem = this.fxSystemBattle;
+      if (fxSystem) {
+        fxSystem.spawnToxic(enemy.x, enemy.y);
+        fxSystem.spawnGlyph(enemy.x, enemy.y, 0x00ff44);
       }
     }
 

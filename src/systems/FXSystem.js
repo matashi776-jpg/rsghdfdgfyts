@@ -30,7 +30,7 @@ export default class FXSystem {
   spawnGlitchStorm(x, y) {
     this._flash(x, y, 0x8800ff, 'fx_boss_glitch_storm');
     this.scene.cameras.main.flash(300, 128, 0, 255);
-    this._spawnGlitchRects(x, y);
+    this.spawnGlitch(x, y);
   }
 
   // ── Hero spell: glowing circle with rising glyphs ─────────────────────────
@@ -302,10 +302,6 @@ export default class FXSystem {
       const color = Phaser.Utils.Array.GetRandom(GLYPH_COLORS);
       this._spawnRisingGlyph(x + Phaser.Math.Between(-12, 12), y, color);
     }
-  }
-
-  _spawnGlitchRects(x, y) {
-    this.spawnGlitch(x, y);
   }
 
   get time() { return this.scene.time; }

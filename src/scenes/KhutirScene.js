@@ -165,7 +165,6 @@ export default class KhutirScene extends Phaser.Scene {
     });
 
     // ── Ritual / location points ─────────────────────────────────────────────
-    this._buildingGfx = this.add.graphics().setDepth(6);
     this._ritualMarkers = [];
     for (const rp of RITUAL_POINTS) {
       this._createRitualPoint(rp, width, height);
