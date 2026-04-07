@@ -66,7 +66,7 @@ export default class PreloadScene extends Phaser.Scene {
 
     // ── Stage 1 — Player (Serhiy) ──────────────────────────────────────────
     const P = 'assets/characters/player/';
-    this.load.image('player_serhiy_full', `${P}player_serhiy_full.png`);
+    this.load.svg('player_serhiy_full', `${P}player_serhiy_full.svg`, { width: 256, height: 384 });
     for (let i = 1; i <= 12; i++) {
       const n = String(i).padStart(2, '0');
       this.load.image(`player_serhiy_idle_${n}`,  `${P}player_serhiy_idle_${n}.png`);
@@ -79,7 +79,8 @@ export default class PreloadScene extends Phaser.Scene {
 
     // ── Stage 1 — NPC ──────────────────────────────────────────────────────
     const NPC = 'assets/characters/npc/';
-    this.load.image('npc_mykhas_full',  `${NPC}npc_mykhas_full.png`);
+    this.load.svg('npc_mykhas_full',  `${NPC}npc_mykhas_full.svg`,  { width: 256, height: 384 });
+    this.load.svg('npc_olena_full',   `${NPC}npc_olena_full.svg`,   { width: 256, height: 384 });
     this.load.image('npc_babtsya_full', `${NPC}npc_babtsya_full.png`);
 
     // ── Stage 1 — Enemies ──────────────────────────────────────────────────
@@ -190,6 +191,7 @@ export default class PreloadScene extends Phaser.Scene {
       })),
       // NPC
       { key: 'npc_mykhas_full',  color: 0x005566, w: 64, h: 96 },
+      { key: 'npc_olena_full',   color: 0xff6b35, w: 64, h: 96 },
       { key: 'npc_babtsya_full', color: 0x664400, w: 64, h: 96 },
       // Zombie clerk
       { key: 'enemy_zombie_clerk_full', color: 0x334400, w: 56, h: 80 },

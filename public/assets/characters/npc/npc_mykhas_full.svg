@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 384">
+  <!--
+    MYKHAS — Craftsman-Magician of Lanchyn
+    Neon Psychedelic Cyber-Folk style
+    Colors: Purple #9B00FF · Neon Green #00FF88 · Gold #FFD700
+    Thick black outlines, flat neon fills, no gradients
+  -->
+
+  <!-- ── Outer aura rings ── -->
+  <circle cx="128" cy="215" r="132" fill="none" stroke="#9B00FF" stroke-width="1.5" opacity="0.12"/>
+  <circle cx="128" cy="215" r="114" fill="none" stroke="#00FF88" stroke-width="2"   opacity="0.18"/>
+  <circle cx="128" cy="215" r="96"  fill="none" stroke="#9B00FF" stroke-width="2.5" opacity="0.28"/>
+  <circle cx="128" cy="215" r="78"  fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.20"/>
+
+  <!-- ── Floating magic core / orb ── -->
+  <!-- Outer glow rings of the core -->
+  <circle cx="62"  cy="155" r="34" fill="none" stroke="#00FF88" stroke-width="1.5" opacity="0.25"/>
+  <circle cx="62"  cy="155" r="26" fill="none" stroke="#9B00FF" stroke-width="2"   opacity="0.40"/>
+  <!-- Core body -->
+  <circle cx="62"  cy="155" r="20" fill="#9B00FF" stroke="#000" stroke-width="3"/>
+  <circle cx="62"  cy="155" r="13" fill="#00FF88" stroke="#000" stroke-width="2"/>
+  <circle cx="62"  cy="155" r="7"  fill="#FFD700" stroke="#000" stroke-width="1.5"/>
+  <!-- Core highlight -->
+  <circle cx="58"  cy="151" r="3"  fill="#FFFFFF" opacity="0.85"/>
+  <!-- Core orbit ring -->
+  <ellipse cx="62" cy="155" rx="28" ry="10" fill="none" stroke="#00FF88" stroke-width="2" opacity="0.70" transform="rotate(-30,62,155)"/>
+  <ellipse cx="62" cy="155" rx="28" ry="10" fill="none" stroke="#9B00FF" stroke-width="1.5" opacity="0.55" transform="rotate(40,62,155)"/>
+  <!-- Chain to hand (floating) -->
+  <path d="M62,175 Q75,185 88,195" fill="none" stroke="#00FF88" stroke-width="2" stroke-dasharray="4,3" opacity="0.70"/>
+
+  <!-- ── Legs / boots ── -->
+  <!-- Left leg -->
+  <rect x="97"  y="252" width="28" height="100" rx="5" fill="#00443A" stroke="#000" stroke-width="3"/>
+  <!-- Right leg -->
+  <rect x="131" y="252" width="28" height="100" rx="5" fill="#00443A" stroke="#000" stroke-width="3"/>
+  <!-- Left boot -->
+  <rect x="90"  y="330" width="42" height="26" rx="7" fill="#1A1A1A" stroke="#000" stroke-width="3"/>
+  <!-- Right boot -->
+  <rect x="124" y="330" width="42" height="26" rx="7" fill="#1A1A1A" stroke="#000" stroke-width="3"/>
+  <!-- Boot trim (neon green) -->
+  <rect x="90"  y="330" width="42" height="6" rx="3" fill="#00FF88" stroke="#000" stroke-width="1"/>
+  <rect x="124" y="330" width="42" height="6" rx="3" fill="#00FF88" stroke="#000" stroke-width="1"/>
+
+  <!-- ── Belt ── -->
+  <rect x="93" y="248" width="70" height="12" rx="4" fill="#FFD700" stroke="#000" stroke-width="2"/>
+  <!-- Belt buckle (forge symbol) -->
+  <rect x="120" y="246" width="16" height="16" rx="2" fill="#1A1A1A" stroke="#000" stroke-width="2"/>
+  <polygon points="128,249 133,255 128,261 123,255" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+
+  <!-- ── Torso / craftsman shirt ── -->
+  <rect x="93" y="150" width="70" height="104" rx="4" fill="#6600BB" stroke="#000" stroke-width="3"/>
+  <!-- Neon green trim lines on shirt -->
+  <rect x="93" y="150" width="70" height="14" fill="#00FF88" stroke="#000" stroke-width="2"/>
+  <!-- Geometric pattern on band -->
+  <polygon points="100,152 106,157 100,162" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <polygon points="114,152 120,157 114,162" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <polygon points="128,152 134,157 128,162" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <polygon points="142,152 148,157 142,162" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <polygon points="152,152 156,157 152,162" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <!-- Bottom shirt stripe -->
+  <rect x="93" y="226" width="70" height="10" fill="#00FF88" stroke="#000" stroke-width="2"/>
+
+  <!-- ── Craftsman leather apron ── -->
+  <polygon points="105,160 151,160 157,248 99,248" fill="#4A2800" stroke="#000" stroke-width="3"/>
+  <!-- Apron pocket -->
+  <rect x="116" y="195" width="24" height="22" rx="3" fill="#3A1E00" stroke="#000" stroke-width="2"/>
+  <!-- Tools in pocket (chisel, nail) -->
+  <rect x="121" y="193" width="4" height="14" rx="1" fill="#888888" stroke="#000" stroke-width="1"/>
+  <rect x="131" y="191" width="3" height="18" rx="1" fill="#AAAAAA" stroke="#000" stroke-width="1"/>
+  <!-- Apron neon trim -->
+  <line x1="105" y1="160" x2="99"  y2="248" stroke="#00FF88" stroke-width="1.5" opacity="0.60"/>
+  <line x1="151" y1="160" x2="157" y2="248" stroke="#00FF88" stroke-width="1.5" opacity="0.60"/>
+
+  <!-- ── Arms ── -->
+  <!-- Left arm (holds orb side — reaching left) -->
+  <rect x="56" y="157" width="40" height="18" rx="6" fill="#6600BB" stroke="#000" stroke-width="3" transform="rotate(-20,76,166)"/>
+  <rect x="46" y="178" width="28" height="55" rx="8" fill="#FFCC88" stroke="#000" stroke-width="3" transform="rotate(-18,60,205)"/>
+  <!-- Left hand -->
+  <ellipse cx="52" cy="234" rx="13" ry="10" fill="#FFCC88" stroke="#000" stroke-width="2" transform="rotate(-18,52,234)"/>
+
+  <!-- Right arm (holding hammer) -->
+  <rect x="160" y="157" width="40" height="18" rx="6" fill="#6600BB" stroke="#000" stroke-width="3" transform="rotate(15,180,166)"/>
+  <rect x="180" y="174" width="28" height="55" rx="8" fill="#FFCC88" stroke="#000" stroke-width="3" transform="rotate(10,194,201)"/>
+  <!-- Right hand -->
+  <ellipse cx="198" cy="232" rx="13" ry="10" fill="#FFCC88" stroke="#000" stroke-width="2" transform="rotate(10,198,232)"/>
+  <!-- Hammer -->
+  <rect x="196" y="185" width="8"  height="70" rx="3" fill="#7B3A10" stroke="#000" stroke-width="2" transform="rotate(15,200,220)"/>
+  <rect x="188" y="183" width="24" height="16" rx="4" fill="#888888" stroke="#000" stroke-width="2" transform="rotate(15,200,191)"/>
+
+  <!-- ── Head ── -->
+  <ellipse cx="128" cy="103" rx="36" ry="42" fill="#FFCC88" stroke="#000" stroke-width="3"/>
+
+  <!-- Hair (thick, dark, craftsman style) -->
+  <ellipse cx="128" cy="67"  rx="38" ry="22" fill="#2D1700" stroke="#000" stroke-width="3"/>
+  <!-- Headband (craftsman) -->
+  <rect x="90"  y="76" width="76" height="10" rx="4" fill="#00FF88" stroke="#000" stroke-width="2"/>
+  <!-- Headband geometric pattern -->
+  <rect x="96"  y="78" width="6" height="6" rx="1" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <rect x="110" y="78" width="6" height="6" rx="1" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <rect x="124" y="78" width="6" height="6" rx="1" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <rect x="138" y="78" width="6" height="6" rx="1" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <rect x="152" y="78" width="6" height="6" rx="1" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+
+  <!-- Eyebrows -->
+  <rect x="109" y="90" width="16" height="5" rx="2" fill="#2D1700" stroke="#000" stroke-width="1"/>
+  <rect x="131" y="90" width="16" height="5" rx="2" fill="#2D1700" stroke="#000" stroke-width="1"/>
+
+  <!-- Eyes (neon green, determined) -->
+  <ellipse cx="116" cy="104" rx="9"  ry="10" fill="#00FF88" stroke="#000" stroke-width="2"/>
+  <ellipse cx="140" cy="104" rx="9"  ry="10" fill="#00FF88" stroke="#000" stroke-width="2"/>
+  <ellipse cx="116" cy="104" rx="5"  ry="6"  fill="#003322"/>
+  <ellipse cx="140" cy="104" rx="5"  ry="6"  fill="#003322"/>
+  <circle  cx="119" cy="101" r="2"  fill="#FFFFFF" opacity="0.9"/>
+  <circle  cx="143" cy="101" r="2"  fill="#FFFFFF" opacity="0.9"/>
+  <!-- Eye glow -->
+  <ellipse cx="116" cy="104" rx="11" ry="12" fill="none" stroke="#00FF88" stroke-width="1" opacity="0.45"/>
+  <ellipse cx="140" cy="104" rx="11" ry="12" fill="none" stroke="#00FF88" stroke-width="1" opacity="0.45"/>
+
+  <!-- Nose -->
+  <path d="M124 114 Q128 122 132 114" fill="none" stroke="#CC9966" stroke-width="2"/>
+
+  <!-- Beard (craftsman bushy beard) -->
+  <path d="M100,130 Q105,148 128,152 Q151,148 156,130 Q148,138 128,140 Q108,138 100,130 Z" fill="#2D1700" stroke="#000" stroke-width="2"/>
+  <!-- Beard neon trim -->
+  <path d="M108,142 Q128,150 148,142" fill="none" stroke="#9B00FF" stroke-width="1.5" opacity="0.70"/>
+
+  <!-- ── Floating magic runes (geometric) ── -->
+  <!-- Rune 1 — top left -->
+  <g transform="translate(22,40)" opacity="0.85">
+    <rect x="4" y="4" width="22" height="22" rx="2" fill="none" stroke="#9B00FF" stroke-width="2"/>
+    <line x1="4"  y1="15" x2="26" y2="15" stroke="#9B00FF" stroke-width="1.5"/>
+    <line x1="15" y1="4"  x2="15" y2="26" stroke="#9B00FF" stroke-width="1.5"/>
+    <line x1="4"  y1="4"  x2="26" y2="26" stroke="#9B00FF" stroke-width="1.5"/>
+    <circle cx="15" cy="15" r="14" fill="none" stroke="#9B00FF" stroke-width="1" opacity="0.35"/>
+  </g>
+
+  <!-- Rune 2 — right side -->
+  <g transform="translate(212,90)" opacity="0.85">
+    <polygon points="14,2 26,24 2,24" fill="none" stroke="#00FF88" stroke-width="2"/>
+    <polygon points="14,22 2,0 26,0"  fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.60"/>
+    <circle  cx="14" cy="13" r="4"   fill="#00FF88" stroke="#000" stroke-width="1.5"/>
+    <circle  cx="14" cy="13" r="16"  fill="none" stroke="#00FF88" stroke-width="1" opacity="0.35"/>
+  </g>
+
+  <!-- Spark particles (forge sparks) -->
+  <circle cx="35"  cy="250" r="3" fill="#FFD700" stroke="#000" stroke-width="1"/>
+  <circle cx="220" cy="270" r="2.5" fill="#00FF88" stroke="#000" stroke-width="1"/>
+  <circle cx="228" cy="240" r="2" fill="#9B00FF" stroke="#000" stroke-width="1"/>
+  <circle cx="30"  cy="290" r="2" fill="#FFD700" stroke="#000" stroke-width="1"/>
+  <circle cx="225" cy="310" r="3" fill="#00FF88" stroke="#000" stroke-width="1"/>
+</svg>
