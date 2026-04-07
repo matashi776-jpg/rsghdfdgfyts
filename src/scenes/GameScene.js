@@ -7,6 +7,7 @@ import ProjectileSystem from '../systems/ProjectileSystem.js';
 import FXSystem        from '../systems/FXSystem.js';
 import UISystem        from '../systems/UISystem.js';
 import PerkSystem      from '../systems/PerkSystem.js';
+import AmuletSystem    from '../systems/AmuletSystem.js';
 import Player          from '../entities/Player.js';
 import ZombieClerk     from '../entities/ZombieClerk.js';
 import Archivarius     from '../entities/Archivarius.js';
@@ -35,11 +36,15 @@ export default class GameScene extends Phaser.Scene {
     this.projectileSystem = new ProjectileSystem(this);
     this.fxSystem         = new FXSystem(this);
     this.perkSystem       = new PerkSystem(this);
+    this.amuletSystem     = new AmuletSystem(this);
     this.uiSystem         = new UISystem(this);
     this.waveSystem       = new WaveSystem(this);
 
     // Player
     this.player = new Player(this, width * 0.15, height * 0.5);
+
+    // Wire amulet overlap now that player exists
+    this.amuletSystem.setupOverlap(this.player);
 
     // Enemy groups
     this.enemies = this.physics.add.group();
@@ -85,6 +90,7 @@ export default class GameScene extends Phaser.Scene {
     this.projectileSystem.update(time, delta);
     this.fxSystem.update(time, delta);
     this.uiSystem.update(time, delta);
+    this.amuletSystem.update(time);
 
     // Clean up dead enemies
     this.enemies.getChildren().forEach(e => {
@@ -122,6 +128,8 @@ export default class GameScene extends Phaser.Scene {
   _onWaveComplete() {
     this.wave++;
     this.uiSystem.showWaveBanner(this.wave);
+    // Spawn 1–2 amulet pickups for the player to find
+    this.amuletSystem.spawnPickups(Phaser.Math.Between(1, 2));
     this.perkSystem.offerPerks();
   }
 

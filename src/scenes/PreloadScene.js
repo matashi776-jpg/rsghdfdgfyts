@@ -116,6 +116,18 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('item_iron_seal',         `${IT}item_iron_seal.png`);
     this.load.image('item_tryzub_fragment',   `${IT}item_tryzub_fragment.png`);
 
+    // ── Stage 1 — Amulets (Ukrainian folklore) ─────────────────────────────
+    const AM = 'assets/items/amulets/';
+    this.load.image('amulet_veselka',    `${AM}amulet_veselka.png`);
+    this.load.image('amulet_zemnyi',     `${AM}amulet_zemnyi.png`);
+    this.load.image('amulet_soniachne',  `${AM}amulet_soniachne.png`);
+    this.load.image('amulet_misiachnyi', `${AM}amulet_misiachnyi.png`);
+    this.load.image('amulet_voloshy',    `${AM}amulet_voloshy.png`);
+    this.load.image('amulet_ptashynyi',  `${AM}amulet_ptashynyi.png`);
+    this.load.image('amulet_vohniana',   `${AM}amulet_vohniana.png`);
+    this.load.image('amulet_rusalky',    `${AM}amulet_rusalky.png`);
+    this.load.image('vyshyvanka_stitch', `${AM}vyshyvanka_stitch.png`);
+
     // ── Stage 1 — UI ───────────────────────────────────────────────────────
     const UI = 'assets/ui/';
     this.load.image('ui_button_start',  `${UI}ui_button_start.png`);
@@ -220,6 +232,16 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'item_golden_coupon',    color: 0xffcc00, w: 48, h: 32 },
       { key: 'item_iron_seal',        color: 0x888888, w: 36, h: 36 },
       { key: 'item_tryzub_fragment',  color: 0x0044ff, w: 36, h: 40 },
+      // Amulets — Ukrainian folklore
+      { key: 'amulet_veselka',    color: 0xff88ff, w: 40, h: 40 },
+      { key: 'amulet_zemnyi',     color: 0x88ff44, w: 40, h: 40 },
+      { key: 'amulet_soniachne',  color: 0xffcc00, w: 40, h: 40 },
+      { key: 'amulet_misiachnyi', color: 0xaaccff, w: 40, h: 40 },
+      { key: 'amulet_voloshy',    color: 0x4488ff, w: 40, h: 40 },
+      { key: 'amulet_ptashynyi',  color: 0x00ffaa, w: 40, h: 40 },
+      { key: 'amulet_vohniana',   color: 0xff4400, w: 40, h: 40 },
+      { key: 'amulet_rusalky',    color: 0x00ccff, w: 40, h: 40 },
+      { key: 'vyshyvanka_stitch', color: 0xff0055, w: 40, h: 40 },
       // UI
       { key: 'ui_button_start', color: 0x004488, w: 200, h: 56  },
       { key: 'ui_hp_bar',       color: 0x220000, w: 300, h: 28  },

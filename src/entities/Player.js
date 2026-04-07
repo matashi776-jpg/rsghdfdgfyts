@@ -8,12 +8,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    this.maxHp       = 100;
-    this.hp          = 100;
-    this.speed       = 220;
-    this.fireRate    = 350; // ms between shots
-    this._lastFire   = 0;
-    this.shieldUntil = 0;
+    this.maxHp          = 100;
+    this.hp             = 100;
+    this.speed          = 220;
+    this.fireRate       = 350;  // ms between shots
+    this._lastFire      = 0;
+    this.shieldUntil    = 0;
+
+    // Amulet / vyshyvanka stats
+    this.resistance       = 0;     // damage reduction 0–0.75
+    this.ritualChance     = 0;     // chance 0–0.9 for a burst triple-shot
+    this.hpRegen          = 0;     // HP restored per second
+    this.explosiveBullets = false; // amulet: vohniana_ptashka
+    this.amulets          = [];    // ids of collected amulets
+    this.vyshyvankaCount  = 1;     // Serhiy already wears one
 
     this.setCollideWorldBounds(true);
     this.setDepth(5);
@@ -46,12 +54,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.play('player_idle', true);
     }
 
+    // HP regeneration from amulets
+    if (this.hpRegen > 0) {
+      this.hp = Math.min(this.maxHp, this.hp + this.hpRegen * delta / 1000);
+    }
+
     // Auto-fire toward nearest enemy
     if (time - this._lastFire > this.fireRate) {
       const target = this._nearestEnemy();
       if (target) {
         const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
-        this.scene.projectileSystem?.fire(this.x, this.y, angle);
+        const ps = this.scene.projectileSystem;
+
+        // Ritual burst: triple spread shot
+        if (ps && Math.random() < this.ritualChance) {
+          const spread = 0.26; // ~15 degrees
+          ps.fireBurst(this.x, this.y, angle, spread, this.explosiveBullets);
+        } else if (ps) {
+          ps.fire(this.x, this.y, angle, this.explosiveBullets);
+        }
+
         this.play('player_shoot', true);
         this._lastFire = time;
       }
@@ -60,7 +82,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   takeDamage(amount) {
     if (this.scene.time.now < this.shieldUntil) return; // shielded
-    this.hp -= amount;
+    const reduced = Math.round(amount * (1 - this.resistance));
+    this.hp -= reduced;
     this.setTint(0xff0000);
     this.scene.time.delayedCall(150, () => this.clearTint());
   }

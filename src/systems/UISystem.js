@@ -40,6 +40,15 @@ export default class UISystem {
       fontSize:   '18px',
       color:      '#ffee00',
     }).setOrigin(1, 0).setDepth(12);
+
+    // Amulet stats row (resistance + amulet count)
+    this._amuletTxt = this.scene.add.text(width - 20, 40, '', {
+      fontFamily: 'Arial Black, Arial',
+      fontSize:   '13px',
+      color:      '#ff88ff',
+      stroke:     '#000000',
+      strokeThickness: 3,
+    }).setOrigin(1, 0).setDepth(12);
   }
 
   update() {
@@ -55,6 +64,16 @@ export default class UISystem {
 
     // Update score
     this._scoreTxt?.setText(`ОЧКИ: ${this.scene.score ?? 0}`);
+
+    // Update amulet / vyshyvanka stats
+    const resist = Math.round((player.resistance ?? 0) * 100);
+    const count  = (player.amulets ?? []).length;
+    const vysh   = player.vyshyvankaCount ?? 1;
+    if (resist > 0 || count > 0) {
+      this._amuletTxt?.setText(
+        `🛡${resist}%  ✦${count}  👘${vysh}`
+      );
+    }
   }
 
   showWaveBanner(wave) {
