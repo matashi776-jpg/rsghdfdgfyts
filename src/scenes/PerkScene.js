@@ -2,13 +2,22 @@
  * PerkScene.js
  * Neon Psychedelic perk-selection overlay — Оборона Ланчина V4.0
  *
- * Shows 3 stylized neon cards every 5 waves.
- * Perks (as specified):
+ * Shows 3 stylized neon cards every 5 BattleScene waves, or every 3 game-rounds
+ * when called from TacticalBattleScene (fromTactical === true).
+ *
+ * BattleScene perks:
  *   - Золотий Талон    — passive money generation ×2
  *   - Техно-Печатка    — house takes 30% less damage
- *   - Кислотний Буряк  — bullet damage ×1.5 + acid splash (extra AOE damage)
+ *   - Кислотний Буряк  — bullet damage ×1.5 + acid splash
  *
- * All text is glowing neon (Cyan / Magenta).
+ * Tactical / folklore bonuses (random 3 of 5):
+ *   - Живиця           — heal heroes +40 HP
+ *   - Козацький Скарб  — +200 gold
+ *   - Мавки Чари       — new forest-charm ability
+ *   - Вогонь Перуна    — thunder strike debuff on enemies
+ *   - Козацький Драйв  — attack speed +30 %
+ *
+ * All text glowing neon (Cyan / Magenta).
  */
 
 const ALL_PERKS = [
@@ -51,7 +60,66 @@ const ALL_PERKS = [
     accent:    0x4488ff,
     textColor: '#88aaff',
     glowColor: '#4488ff',
-    effect: (mod) => { mod.attackSpeed = Math.max(0.1, mod.attackSpeed - 0.3); },
+    effect: (mod) => { mod.attackSpeed = Math.max(0.1, (mod.attackSpeed ?? 1) - 0.3); },
+    folklore:  false,
+  },
+];
+
+// ─── Folklore bonus perks (shown every 3 rounds in TacticalBattleScene) ──────
+const FOLKLORE_PERKS = [
+  {
+    name:      'Живиця',
+    desc:      '❤ Герої відновлюють 40 HP\n(Сила землі Ланчина!)',
+    color:     0x001a00,
+    accent:    0x00ff44,
+    textColor: '#44ff88',
+    glowColor: '#00ff44',
+    effect: (mod) => { mod.healBonus = (mod.healBonus ?? 0) + 40; },
+  },
+  {
+    name:      'Козацький Скарб',
+    desc:      '💰 +200 золота\n(Знайдено козацький схрон!)',
+    color:     0x1a1000,
+    accent:    0xffaa00,
+    textColor: '#ffcc44',
+    glowColor: '#ffaa00',
+    effect: (mod, extraData) => {
+      mod.treasureBonus = (mod.treasureBonus ?? 0) + 200;
+      if (extraData?.resources) extraData.resources.money = (extraData.resources.money ?? 0) + 200;
+    },
+  },
+  {
+    name:      'Мавки Чари',
+    desc:      '🌿 Нова здібність:\nЧари лісу ослаблюють ворогів',
+    color:     0x001a0a,
+    accent:    0x00ffaa,
+    textColor: '#00ffcc',
+    glowColor: '#00ffaa',
+    effect: (mod) => {
+      mod.forestCharm  = (mod.forestCharm  ?? 0) + 1;
+      mod.enemyWeak    = (mod.enemyWeak    ?? 0) + 0.15;
+    },
+  },
+  {
+    name:      'Вогонь Перуна',
+    desc:      '⚡ Магічна атака на всіх ворогів\n(Грім б\'є по ворогам!)',
+    color:     0x1a1000,
+    accent:    0xffff00,
+    textColor: '#ffff44',
+    glowColor: '#ffff00',
+    effect: (mod) => {
+      mod.thunderStrike = (mod.thunderStrike ?? 0) + 1;
+      mod.damage        = (mod.damage        ?? 1) + 0.2;
+    },
+  },
+  {
+    name:      'Козацький Драйв',
+    desc:      '⚡ Швидкість атаки +30%\n(Сергій в кайфі!)',
+    color:     0x001122,
+    accent:    0x4488ff,
+    textColor: '#88aaff',
+    glowColor: '#4488ff',
+    effect: (mod) => { mod.attackSpeed = Math.max(0.1, (mod.attackSpeed ?? 1) - 0.3); },
   },
 ];
 
@@ -63,8 +131,15 @@ export default class PerkScene extends Phaser.Scene {
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   init(data) {
-    this.modifiers = data.modifiers;
-    this.wave      = data.wave;
+    this.modifiers       = data.modifiers       ?? {};
+    this.wave            = data.wave            ?? 1;
+    this._fromTactical   = data.fromTactical    ?? false;
+    this._resources      = data.resources       ?? {};
+    this._cordonLevel    = data.cordonLevel     ?? 1;
+    this._nextRound      = data.nextRound       ?? (this.wave + 1);
+    this._xp             = data.xp             ?? 0;
+    this._level          = data.level          ?? 1;
+    this._defeatedEnemies = data.defeatedEnemies ?? 0;
   }
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -85,7 +160,10 @@ export default class PerkScene extends Phaser.Scene {
     grid.strokePath();
 
     // Title — neon cyan
-    this.add.text(width / 2, height * 0.10, `Хвиля ${this.wave} завершена!`, {
+    const titleLabel = this._fromTactical
+      ? `🏆 Раунд ${this.wave} завершено!`
+      : `Хвиля ${this.wave} завершена!`;
+    this.add.text(width / 2, height * 0.10, titleLabel, {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '36px',
       color:      '#00ffff',
@@ -94,7 +172,10 @@ export default class PerkScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 0, color: '#00ffff', blur: 22, fill: true },
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height * 0.20, 'ОБЕРИ ЗДІБНІСТЬ:', {
+    const subtitleLabel = this._fromTactical
+      ? '🎲 ОБЕРИ ФОЛЬКЛОРНИЙ БОНУС:'
+      : 'ОБЕРИ ЗДІБНІСТЬ:';
+    this.add.text(width / 2, height * 0.20, subtitleLabel, {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '26px',
       color:      '#ff00ff',
@@ -103,8 +184,10 @@ export default class PerkScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 0, color: '#ff00ff', blur: 18, fill: true },
     }).setOrigin(0.5);
 
-    // Always show the 3 required perks (first 3 from ALL_PERKS)
-    const chosen = ALL_PERKS.slice(0, 3);
+    // Tactical → random 3 folklore perks; BattleScene → first 3 standard perks
+    const chosen = this._fromTactical
+      ? Phaser.Utils.Array.Shuffle([...FOLKLORE_PERKS]).slice(0, 3)
+      : ALL_PERKS.slice(0, 3);
 
     const CARD_W  = 300;
     const CARD_H  = 320;
@@ -188,7 +271,7 @@ export default class PerkScene extends Phaser.Scene {
     });
 
     zone.on('pointerdown', () => {
-      perk.effect(this.modifiers);
+      perk.effect(this.modifiers, { resources: this._resources });
       this._confirmSelection();
     });
   }
@@ -224,10 +307,23 @@ export default class PerkScene extends Phaser.Scene {
 
     this.cameras.main.fadeOut(460, 0, 0, 20);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      const battle = this.scene.get('BattleScene');
-      battle.resumeFromPerk();
-      this.scene.stop();
-      this.scene.resume('BattleScene');
+      if (this._fromTactical) {
+        // Return to ExploreScene with updated modifiers and resources
+        this.scene.start('ExploreScene', {
+          resources:       this._resources,
+          cordonLevel:     this._cordonLevel,
+          round:           this._nextRound,
+          xp:              this._xp,
+          level:           this._level,
+          modifiers:       this.modifiers,
+          defeatedEnemies: this._defeatedEnemies,
+        });
+      } else {
+        const battle = this.scene.get('BattleScene');
+        battle.resumeFromPerk();
+        this.scene.stop();
+        this.scene.resume('BattleScene');
+      }
     });
   }
 }

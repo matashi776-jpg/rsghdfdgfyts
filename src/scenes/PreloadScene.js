@@ -155,6 +155,11 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.image('symbol_pysanka_glow',    `${SY}symbol_pysanka_glow.png`);
     this.load.image('symbol_vyshyvanka_knot', `${SY}symbol_vyshyvanka_knot.png`);
     this.load.image('symbol_rushnyk_cross',   `${SY}symbol_rushnyk_cross.png`);
+
+    // ── Explore / Ritual / Tactical scenes ─────────────────────────────────
+    this.load.image('location_lanchyn_map',   `${LO}location_lanchyn_map.png`);
+    this.load.image('hero_serhiy_portrait',   'assets/characters/player/player_serhiy_full.png');
+    this.load.image('hero_olena_portrait',    'assets/characters/npc/npc_babtsya_full.png');
   }
 
   create() {
@@ -248,6 +253,10 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'symbol_pysanka_glow',    color: 0xff8800, w: 64, h: 64 },
       { key: 'symbol_vyshyvanka_knot', color: 0xff0044, w: 64, h: 64 },
       { key: 'symbol_rushnyk_cross',   color: 0xff4400, w: 64, h: 64 },
+      // Explore / Ritual / Tactical
+      { key: 'location_lanchyn_map',   color: 0x020c18, w: 1280, h: 720 },
+      { key: 'hero_serhiy_portrait',   color: 0xff00ff, w: 80,   h: 120 },
+      { key: 'hero_olena_portrait',    color: 0x00aaff, w: 80,   h: 120 },
     ];
 
     for (const fb of defs) {
