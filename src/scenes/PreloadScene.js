@@ -233,11 +233,11 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'ui_perk_card',    color: 0x110033, w: 160, h: 220 },
       { key: 'ui_dialog_box',   color: 0x001122, w: 640, h: 140 },
       // Perk icons
-      { key: 'ui_icon_damage_up',  color: 0xff0044, w: 64, h: 64 },
-      { key: 'ui_icon_speed_up',   color: 0x39ff14, w: 64, h: 64 },
-      { key: 'ui_icon_hp_restore', color: 0xff00aa, w: 64, h: 64 },
-      { key: 'ui_icon_fire_rate',  color: 0x00bfff, w: 64, h: 64 },
-      { key: 'ui_icon_shield',     color: 0x7f00ff, w: 64, h: 64 },
+      { key: 'ui_icon_damage_up',  color: 0xff0044, w: 128, h: 128 },
+      { key: 'ui_icon_speed_up',   color: 0x39ff14, w: 128, h: 128 },
+      { key: 'ui_icon_hp_restore', color: 0xff00aa, w: 128, h: 128 },
+      { key: 'ui_icon_fire_rate',  color: 0x00bfff, w: 128, h: 128 },
+      { key: 'ui_icon_shield',     color: 0x7f00ff, w: 128, h: 128 },
       // FX
       { key: 'fx_bullet_blue',       color: 0x0066ff, w: 16, h: 8   },
       { key: 'fx_hit_pink',          color: 0xff69b4, w: 32, h: 32  },
