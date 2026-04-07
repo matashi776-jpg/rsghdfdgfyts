@@ -1,26 +1,62 @@
 /**
  * Player.js
- * Player entity — Serhiy — ACID KHUTIR Stage 1
+ * Player entity — Сергій — Хранитель Грому — ACID KHUTIR
+ *
+ * Serhiy is the primary combat hero (Перун school — Thunder).
+ * He carries SpellSystem and EquipmentSystem which provide
+ * Ukrainian-folklore-rooted abilities and clothing bonuses.
+ *
+ * Controls:
+ *   WASD / Arrow keys — movement
+ *   Q               — cast active spell
+ *   E               — cycle to next spell
  */
+import SpellSystem     from '../systems/SpellSystem.js';
+import EquipmentSystem from '../systems/EquipmentSystem.js';
+import { HEROES }      from '../core/LoreData.js';
+import { DEFAULT_LOADOUT } from '../core/EquipmentData.js';
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'player_serhiy_idle_01');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    this.maxHp       = 100;
-    this.hp          = 100;
-    this.speed       = 220;
-    this.fireRate    = 350; // ms between shots
+    const def = HEROES.serhiy;
+    this.maxHp       = def.stats.maxHp;
+    this.hp          = def.stats.maxHp;
+    this.speed       = def.stats.speed;
+    this.fireRate    = def.stats.fireRate;
     this._lastFire   = 0;
     this.shieldUntil = 0;
+    this.heroId      = 'serhiy';
 
     this.setCollideWorldBounds(true);
     this.setDepth(5);
 
     // Input
-    this._cursors = scene.input.keyboard.createCursorKeys();
-    this._wasd    = scene.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
+    this._cursors   = scene.input.keyboard.createCursorKeys();
+    this._wasd      = scene.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
+    this._spellKey  = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+    this._cycleKey  = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+    // Spell system — Перун school (Thunder / Combat)
+    this.spellSystem = new SpellSystem(
+      scene, this,
+      def.startingSpells,
+      def.stats.mana,
+      def.stats.manaRegen,
+    );
+
+    // Equipment system
+    this.equipmentSystem = new EquipmentSystem(this, this.spellSystem, {
+      maxHp: this.maxHp, speed: this.speed, fireRate: this.fireRate,
+    });
+    // Apply default Serhiy loadout (Вишиванка-броня, Бурштин Перуна, etc.)
+    for (const slot of Object.keys(DEFAULT_LOADOUT.serhiy)) {
+      const itemId = DEFAULT_LOADOUT.serhiy[slot];
+      if (itemId) this.equipmentSystem.equip(itemId);
+    }
 
     // Animations
     this._buildAnims(scene);
@@ -56,11 +92,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this._lastFire = time;
       }
     }
+
+    // Spell cast — Q
+    if (Phaser.Input.Keyboard.JustDown(this._spellKey)) {
+      this.spellSystem.castActive(time);
+    }
+
+    // Cycle spell — E
+    if (Phaser.Input.Keyboard.JustDown(this._cycleKey)) {
+      this.spellSystem.cycleNext();
+    }
+
+    this.spellSystem.update(time, delta);
   }
 
   takeDamage(amount) {
     if (this.scene.time.now < this.shieldUntil) return; // shielded
-    this.hp -= amount;
+    // Virus/contact damage reduced by equipment (Оберіг, Вишиванка)
+    const resist = this.equipmentSystem?.getVirusResist() ?? 0;
+    const actual = Math.round(amount * (1 - resist));
+    this.hp -= actual;
     this.setTint(0xff0000);
     this.scene.time.delayedCall(150, () => this.clearTint());
   }

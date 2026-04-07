@@ -1,15 +1,15 @@
 /**
  * BattleScene.js
- * Dynamic battle engine — Оборона Ланчина V4.0 NEON PSYCHEDELIC
+ * Dynamic battle engine — Оборона Ланчина V5.0 NEON PSYCHEDELIC CYBER-FOLK
  *
- * Changes from V3:
- *  - Wave duration: 80 s (was 60 s)
- *  - Enemy scaling: +30% HP and +10% speed per wave
- *  - Boss appearance: bgm.setRate(1.2)
- *  - Neon projectile trails (pink/orange additive particles)
- *  - House tiers with gameplay bonuses
- *  - Neon visual style throughout
+ * V5 additions:
+ *  - LanchinCitySystem: city grows with every defended wave (5 tiers)
+ *  - LORE_FRAGMENTS shown after each wave
+ *  - City bonuses applied to wall defense and passive income
  */
+import LanchinCitySystem from '../systems/LanchinCitySystem.js';
+import { LORE_FRAGMENTS } from '../core/LoreData.js';
+
 export default class BattleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BattleScene' });
@@ -152,6 +152,9 @@ export default class BattleScene extends Phaser.Scene {
     // ── Start first wave ────────────────────────────────────────────────────
     this._startWave();
 
+    // ── Lanchin City System ──────────────────────────────────────────────────
+    this.citySystem = new LanchinCitySystem(this);
+
     // ── Launch persistent UI overlay ────────────────────────────────────────
     this.scene.launch('UIScene');
   }
@@ -249,6 +252,20 @@ export default class BattleScene extends Phaser.Scene {
     this.waveActive = false;
     if (this._spawnTimer)   { this._spawnTimer.remove();   this._spawnTimer   = null; }
     if (this._waveEndTimer) { this._waveEndTimer.remove(); this._waveEndTimer = null; }
+
+    // Notify Lanchin city — it grows stronger with each defended wave
+    this.citySystem?.onWaveDefended();
+
+    // Apply city bonuses to modifiers
+    const cityBonuses = this.citySystem?.getBonuses();
+    if (cityBonuses) {
+      this.modifiers.wallDefense   = cityBonuses.defense;
+      this.modifiers.passiveIncome = Math.max(this.modifiers.passiveIncome, cityBonuses.income);
+    }
+
+    // Show lore fragment for this wave
+    const frag = LORE_FRAGMENTS.find(f => f.wave === this.wave);
+    if (frag) this.citySystem?.showLoreFragment(frag);
 
     if (this.wave === 5 || this.wave === 10) {
       this.scene.pause();

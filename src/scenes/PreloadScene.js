@@ -248,6 +248,30 @@ export default class PreloadScene extends Phaser.Scene {
       { key: 'symbol_pysanka_glow',    color: 0xff8800, w: 64, h: 64 },
       { key: 'symbol_vyshyvanka_knot', color: 0xff0044, w: 64, h: 64 },
       { key: 'symbol_rushnyk_cross',   color: 0xff4400, w: 64, h: 64 },
+      // ── Spell icons (Перун school) ────────────────────────────────────────
+      { key: 'spell_thunderbolt',     color: 0xffff00, w: 48, h: 48 },
+      { key: 'spell_cossack_cry',     color: 0xff8800, w: 48, h: 48 },
+      { key: 'spell_perun_wrath',     color: 0x00ffff, w: 48, h: 48 },
+      { key: 'spell_trident',         color: 0x0044ff, w: 48, h: 48 },
+      { key: 'spell_lightning_path',  color: 0xffff44, w: 48, h: 48 },
+      { key: 'spell_tempest',         color: 0xffffff, w: 48, h: 48 },
+      // ── Spell icons (Берегиня school) ─────────────────────────────────────
+      { key: 'spell_healing_dew',      color: 0x00ff88, w: 48, h: 48 },
+      { key: 'spell_living_water',     color: 0x0088ff, w: 48, h: 48 },
+      { key: 'spell_cornflower_shield',color: 0x4488ff, w: 48, h: 48 },
+      { key: 'spell_mermaid_touch',    color: 0x00ffcc, w: 48, h: 48 },
+      { key: 'spell_bereginya',        color: 0xff88cc, w: 48, h: 48 },
+      // ── Spell icons (Стрибог school) ──────────────────────────────────────
+      { key: 'spell_wind_dash',        color: 0xaaffff, w: 48, h: 48 },
+      { key: 'spell_firebird',         color: 0xff6600, w: 48, h: 48 },
+      { key: 'spell_cloud_double',     color: 0x88aaff, w: 48, h: 48 },
+      { key: 'spell_mara',             color: 0x9900ff, w: 48, h: 48 },
+      { key: 'spell_whirlwind',        color: 0x00eeff, w: 48, h: 48 },
+      { key: 'spell_azure_lightning',  color: 0x44aaff, w: 48, h: 48 },
+      // ── Spell icons (shared schools) ──────────────────────────────────────
+      { key: 'spell_dazhbog',          color: 0xffdd00, w: 48, h: 48 },
+      { key: 'spell_nav_curse',        color: 0x550088, w: 48, h: 48 },
+      { key: 'spell_earth_wall',       color: 0x886600, w: 48, h: 48 },
     ];
 
     for (const fb of defs) {
