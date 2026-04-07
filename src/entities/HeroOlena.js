@@ -14,8 +14,8 @@ import { DEFAULT_LOADOUT } from '../core/EquipmentData.js';
 
 export default class HeroOlena extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
-    // Olena uses the npc_mykhas_full texture as placeholder
-    super(scene, x, y, 'npc_mykhas_full');
+    // Olena uses npc_babtsya_full as placeholder (distinct from Mykhas)
+    super(scene, x, y, 'npc_babtsya_full');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 

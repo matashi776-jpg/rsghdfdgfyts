@@ -260,7 +260,7 @@ export default class BattleScene extends Phaser.Scene {
     const cityBonuses = this.citySystem?.getBonuses();
     if (cityBonuses) {
       this.modifiers.wallDefense   = cityBonuses.defense;
-      this.modifiers.passiveIncome = Math.max(this.modifiers.passiveIncome, cityBonuses.income);
+      this.modifiers.passiveIncome = cityBonuses.income;
     }
 
     // Show lore fragment for this wave

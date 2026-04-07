@@ -132,7 +132,7 @@ const PERKS = [
   },
   {
     id:       'spell_earth_wall',
-    label:    '🌍 Земляний Вал',
+    label:    '🌍 Закляття Земного Валу',
     sublabel: 'Вивчити заклинання Матері-Землі',
     color:    '#886600',
     glow:     0x886600,
@@ -169,14 +169,14 @@ export default class PerkSystem {
       width / 2, height / 2, width, height, 0x000000, 0.80
     ).setDepth(80).setInteractive();
 
-    // Neon grid
-    const grid = this.scene.add.graphics().setDepth(80).setAlpha(0.07);
+    // Neon grid — stored for cleanup
+    this._grid = this.scene.add.graphics().setDepth(80).setAlpha(0.07);
     for (let y = 0; y < height; y += 8) {
-      grid.lineStyle(1, 0xff00ff, 1);
-      grid.moveTo(0, y);
-      grid.lineTo(width, y);
+      this._grid.lineStyle(1, 0xff00ff, 1);
+      this._grid.moveTo(0, y);
+      this._grid.lineTo(width, y);
     }
-    grid.strokePath();
+    this._grid.strokePath();
 
     this.scene.add.text(width / 2, height * 0.13, '✦ ОБЕРИ ДАРУНОК ПРЕДКІВ ✦', {
       fontFamily: 'Arial Black, Arial',
@@ -264,6 +264,9 @@ export default class PerkSystem {
       perk.glow, 0.35,
     ).setDepth(90);
     this.scene.tweens.add({ targets: flash, alpha: 0, duration: 380 });
+
+    // Destroy stored grid reference explicitly
+    if (this._grid) { this._grid.destroy(); this._grid = null; }
 
     // Remove overlay and cards
     this.scene.children.getAll().forEach(child => {

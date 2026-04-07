@@ -25,6 +25,9 @@ export default class EquipmentSystem {
       fireRate: entity.fireRate ?? 350,
     };
 
+    // Capture base mana separately so manaMult never stacks exponentially
+    this._baseMana = spellSystem?.maxMana ?? 80;
+
     // Equipped items keyed by slot name
     this.equipped = {};
 
@@ -95,7 +98,9 @@ export default class EquipmentSystem {
     // SpellSystem
     if (spellSystem) {
       spellSystem.spellPowerMult = b.spellPower;
-      spellSystem.maxMana = Math.round((spellSystem.maxMana ?? 80) * b.manaMult);
+      // Always multiply from captured base mana — prevents exponential stacking
+      spellSystem.maxMana = Math.round(this._baseMana * b.manaMult);
+      spellSystem.mana    = Math.min(spellSystem.mana, spellSystem.maxMana);
       spellSystem.schoolBonuses = { ...b.schoolBonuses };
 
       // Unlock spells granted by equipment

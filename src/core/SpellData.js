@@ -383,7 +383,7 @@ export const SPELLS = {
       const duration = 5000 * (spellPower ?? 1);
       caster.shieldUntil = Math.max(caster.shieldUntil, scene.time.now + duration);
       // Decoy visual
-      const decoy = scene.add.image(caster.x + 80, caster.y, 'sergiy')
+      const decoy = scene.add.image(caster.x + 80, caster.y, caster.texture?.key ?? 'sergiy')
         .setDisplaySize(48, 72).setAlpha(0.55).setTint(0x8888ff).setDepth(5);
       scene.tweens.add({ targets: decoy, x: decoy.x + 40, alpha: 0, duration: duration, onComplete: () => decoy.destroy() });
     },

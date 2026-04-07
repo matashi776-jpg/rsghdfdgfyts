@@ -84,7 +84,7 @@ export const HEROES = {
     name:   'Олена',
     title:  'Хранителька Живої Води',
     school: 'bereginya',
-    sprite: 'npc_mykhas_full',
+    sprite: 'npc_babtsya_full',
 
     lore: `
 Олена — знахарка і хранителька Джерела Живої Води.

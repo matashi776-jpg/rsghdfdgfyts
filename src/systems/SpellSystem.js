@@ -156,13 +156,14 @@ export default class SpellSystem {
   _showCastLabel(spellName, color) {
     if (!this.scene.add) return;
     const { x, y } = this.caster;
+    const hex = `#${color.toString(16).padStart(6, '0')}`;
     const t = this.scene.add.text(x, y - 40, spellName, {
       fontFamily: 'Arial Black, Arial',
       fontSize:   '14px',
-      color:      `#${color.toString(16).padStart(6, '0')}`,
+      color:      hex,
       stroke:     '#000000',
       strokeThickness: 3,
-      shadow: { offsetX: 0, offsetY: 0, color: `#${color.toString(16).padStart(6, '0')}`, blur: 10, fill: true },
+      shadow: { offsetX: 0, offsetY: 0, color: hex, blur: 10, fill: true },
     }).setOrigin(0.5).setDepth(30).setAlpha(1);
 
     this.scene.tweens.add({
